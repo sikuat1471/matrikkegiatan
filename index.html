@@ -1,0 +1,1354 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Matrik Kerja Pegawai</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=Source+Sans+3:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #0EA5E9; --primary-dark: #0369A1; --primary-light: #7DD3FC;
+            --background-light: #F0F9FF; --background-dark: #E0F2FE;
+            --weekend-red: #EF4444; --weekend-bg: #FEF2F2;
+            --status-p: #1D4ED8; --status-p-bg: #DBEAFE; --status-t: #B45309; --status-t-bg: #FEF3C7;
+            --status-c: #15803D; --status-c-bg: #DCFCE7; --status-b: #0E7490; --status-b-bg: #CFFAFE; --status-d: #DC2626; --status-d-bg: #FEE2E2;
+        }
+        * { font-family: 'Source Sans 3', sans-serif; box-sizing: border-box; }
+        body { background: linear-gradient(160deg, var(--background-light) 0%, var(--background-dark) 40%, #BAE6FD 100%); min-height: 100vh; }
+        .font-display { font-family: 'Playfair Display', serif; }
+        .bg-particle { position: fixed; border-radius: 50%; pointer-events: none; opacity: 0.08; background: var(--primary); animation: drift 40s infinite ease-in-out; z-index: 0; }
+        @keyframes drift { 0%, 100% { transform: translate(0, 0); } 50% { transform: translate(30px, -40px); } }
+        .menu-bar { background: linear-gradient(135deg, #38BDF8 0%, #0284C7 100%); box-shadow: 0 4px 20px rgba(14, 165, 233, 0.35); position: relative; z-index: 50; }
+        .tab-btn { border-bottom: 3px solid transparent; transition: all 0.3s; color: rgba(255,255,255,0.8); }
+        .tab-btn.active { border-bottom-color: white; color: white; font-weight: 700; }
+        .tab-btn:hover { color: white; }
+        
+        /* Table Global Styles */
+        .schedule-table, .report-table, .rekap-table, .db-table { border-collapse: separate; border-spacing: 0; width: 100%; }
+        
+        /* Sticky Header Implementation */
+        .schedule-table thead th, .report-table thead th, .rekap-table thead th, .db-table thead th {
+            background: linear-gradient(180deg, var(--primary) 0%, var(--primary-dark) 100%); color: white;
+            position: sticky; top: 0; z-index: 10; 
+            border-bottom: 2px solid rgba(255,255,255,0.2);
+        }
+        .sticky-col { position: sticky; background: white; z-index: 15; }
+        thead .sticky-col { z-index: 25 !important; background: linear-gradient(180deg, var(--primary) 0%, var(--primary-dark) 100%); }
+        
+        /* Specific Table Styles */
+        .schedule-table thead th.weekend-header { background: linear-gradient(180deg, var(--weekend-red) 0%, #DC2626 100%); }
+        .schedule-table thead th.custom-holiday-header { background: linear-gradient(180deg, var(--weekend-red) 0%, #DC2626 100%); cursor: pointer; }
+        .schedule-table thead th.date-col { cursor: pointer; }
+        .schedule-table thead th.date-col:hover { filter: brightness(1.1); }
+
+        .schedule-table tbody tr { transition: background 0.15s ease; }
+        .schedule-table tbody tr:nth-child(even) { background: rgba(14, 165, 233, 0.03); }
+        .schedule-table tbody tr:hover { background: rgba(14, 165, 233, 0.08); }
+        .schedule-table td, .schedule-table th { border: 1px solid rgba(14, 165, 233, 0.15); padding: 0; }
+        .schedule-table td.weekend-col { background: var(--weekend-bg); }
+        .schedule-table td.custom-holiday-col { background: var(--weekend-bg); }
+        
+        /* Sticky Columns Adjustments */
+        .sticky-col-1 { left: 0; width: 50px; min-width: 50px; }
+        .sticky-col-2 { left: 50px; width: 260px; min-width: 260px; }
+        .sticky-col-3 { left: 310px; width: 60px; min-width: 60px; }
+        .sticky-col-4 { left: 370px; width: 100px; min-width: 100px; border-right: 2px solid rgba(14, 165, 233, 0.2) !important; }
+        
+        /* Alignment Fixes */
+        .sticky-col-1, .sticky-col-3, .sticky-col-4 { text-align: center; }
+        thead .sticky-col-2 { text-align: center; }
+        tbody .sticky-col-2 { text-align: left; }
+
+        .schedule-table tbody tr:hover .sticky-col { background: #F0F9FF; }
+        .schedule-table thead th.date-col { min-width: 75px; width: 75px; }
+        
+        .cell-wrapper { display: flex; flex-direction: column; height: 50px; background: white; transition: background 0.2s; }
+        .cell-status { height: 22px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; cursor: pointer; font-weight: 700; font-size: 8px; letter-spacing: 0.2px; position: relative; border-bottom: 1px solid rgba(14, 165, 233, 0.1); transition: all 0.15s ease; text-transform: uppercase; }
+        .cell-status:hover { filter: brightness(0.95); }
+        .cell-status.empty { background: transparent; color: #D1D5DB; font-size: 9px; text-transform: none; }
+        .cell-status.empty:hover { background: rgba(14, 165, 233, 0.05); color: #9CA3AF; }
+        .cell-note-input { flex-grow: 1; width: 100%; border: none; outline: none; font-size: 10px; line-height: 1.2; text-align: center; color: #475569; background: rgba(241, 245, 249, 0.5); padding: 2px 4px; resize: none; overflow: hidden; overflow-wrap: break-word; word-break: break-word; white-space: pre-wrap; }
+        .cell-note-input:focus { background: white; box-shadow: inset 0 0 0 1px var(--primary); overflow: hidden; }
+        .cell-note-input::placeholder { color: #CBD5E1; font-size: 8px; }
+        .weekend-col .cell-wrapper, .weekend-col .cell-note-input { background: var(--weekend-bg); }
+        .custom-holiday-col .cell-wrapper, .custom-holiday-col .cell-note-input { background: var(--weekend-bg); }
+        
+        .gol-text { color: #374151; font-weight: 700; background: rgba(14, 165, 233, 0.05); height: 100%; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.2s; position: relative; }
+        .gol-text.empty { color: #9CA3AF; font-weight: 600; }
+        .gol-text:hover { background: rgba(14, 165, 233, 0.2); }
+        .gol-text .edit-hint { display: none; position: absolute; bottom: 100%; left: 50%; transform: translateX(-50%); background: #333; color: white; padding: 2px 6px; border-radius: 4px; font-size: 9px; white-space: nowrap; margin-bottom: 2px; }
+        .gol-text:hover .edit-hint { display: block; }
+
+        /* Action Buttons */
+        .action-btn { padding: 4px 8px; font-size: 10px; font-weight: 600; border-radius: 4px; cursor: pointer; border: 1px solid; margin: 2px; transition: all 0.2s; }
+        .action-btn-edit { color: #2563EB; border-color: #BFDBFE; background: #EFF6FF; }
+        .action-btn-edit:hover { background: #DBEAFE; }
+        .action-btn-status { color: #059669; border-color: #A7F3D0; background: #ECFDF5; }
+        .action-btn-status:hover { background: #D1FAE5; }
+        .action-btn-warning { color: #D97706; border-color: #FDE68A; background: #FFFBEB; }
+        .action-btn-warning:hover { background: #FEF3C7; }
+        .action-btn-delete { color: #DC2626; border-color: #FECACA; background: #FEF2F2; }
+        .action-btn-delete:hover { background: #FEE2E2; }
+
+        .status-Perjadin { background: var(--status-p-bg); color: var(--status-p); }
+        .status-Translok { background: var(--status-t-bg); color: var(--status-t); }
+        .status-Cuti { background: var(--status-c-bg); color: var(--status-c); }
+        .status-Breefing { background: var(--status-b-bg); color: var(--status-b); }
+        .status-Daring { background: var(--status-d-bg); color: var(--status-d); }
+        
+        /* Dropdown Styles */
+        .dropdown-menu { 
+            position: fixed; 
+            background: white; 
+            border-radius: 6px; 
+            box-shadow: 0 4px 15px rgba(0,0,0,0.15); 
+            z-index: 1050; 
+            min-width: 80px; 
+            padding: 2px; 
+            border: 1px solid rgba(0,0,0,0.05); 
+            opacity: 0; 
+            visibility: hidden; 
+            transform: translateY(-5px) scale(0.98); 
+            transition: opacity 0.1s, transform 0.1s; 
+        }
+        .dropdown-menu.show { opacity: 1; visibility: visible; transform: translateY(0) scale(1); }
+        .dropdown-item { display: flex; align-items: center; padding: 4px 6px; cursor: pointer; border-radius: 3px; transition: background 0.1s; font-size: 10px; font-weight: 600; color: #374151; gap: 4px; }
+        .dropdown-item:hover { background: #F3F4F6; }
+        
+        .glass-card { background: rgba(255, 255, 255, 0.92); backdrop-filter: blur(12px); border: 1px solid rgba(14, 165, 233, 0.15); box-shadow: 0 8px 32px rgba(14, 165, 233, 0.08); position: relative; z-index: 1; }
+        
+        /* Button Styles */
+        .ctrl-btn { transition: all 0.25s ease; background: white; border: 2px solid var(--primary); color: var(--primary); font-weight: 600; display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem; }
+        .ctrl-btn:hover { background: var(--primary); color: white; transform: translateY(-2px); box-shadow: 0 6px 15px rgba(14, 165, 233, 0.25); }
+        .ctrl-btn-green { border-color: #10B981; color: #10B981; }
+        .ctrl-btn-green:hover { background: #10B981; color: white; }
+        .ctrl-btn-orange { border-color: #F59E0B; color: #F59E0B; }
+        .ctrl-btn-orange:hover { background: #F59E0B; color: white; }
+        .ctrl-btn-blue { border-color: #2563EB; color: #2563EB; }
+        .ctrl-btn-blue:hover { background: #2563EB; color: white; }
+        .nav-btn { background: #f0f9ff; border: 1px solid #bae6fd; color: #0284c7; padding: 4px 12px; border-radius: 6px; font-weight: 600; font-size: 0.875rem; transition: all 0.2s; }
+        .nav-btn:hover { background: #0284c7; color: white; }
+
+        .custom-select { appearance: none; background: white; border: 2px solid var(--primary); color: var(--primary); font-weight: 600; padding: 0 40px 0 16px; border-radius: 10px; height: 44px; cursor: pointer; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%230EA5E9'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 12px center; background-size: 16px; transition: all 0.25s ease; }
+        .custom-select:hover, .custom-select:focus { background-color: var(--primary); color: white; outline: none; }
+        
+        @keyframes slideIn { from { opacity: 0; transform: translateY(-15px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        .anim-slide { animation: slideIn 0.4s ease forwards; } .anim-fade { animation: fadeIn 0.5s ease forwards; }
+        .d1 { animation-delay: 0.1s; opacity: 0; }
+        .table-wrapper::-webkit-scrollbar { width: 10px; height: 10px; }
+        .table-wrapper::-webkit-scrollbar-track { background: rgba(14, 165, 233, 0.05); border-radius: 5px; }
+        .table-wrapper::-webkit-scrollbar-thumb { background: rgba(14, 165, 233, 0.4); border-radius: 5px; }
+        .holiday-name { position: absolute; bottom: 100%; left: 50%; transform: translateX(-50%); background: #333; color: white; padding: 4px 8px; border-radius: 4px; font-size: 10px; white-space: nowrap; z-index: 20; pointer-events: none; opacity: 0; transition: opacity 0.2s; margin-bottom: 4px; }
+        .holiday-header:hover .holiday-name { opacity: 1; }
+        
+        /* Report & Rekap Table Styles */
+        .report-table th, .rekap-table th { font-size: 12px; padding: 6px 4px; vertical-align: middle; text-align: center; }
+        .report-table td, .rekap-table td { border-color: rgba(14, 165, 233, 0.15); font-size: 12px; padding: 3px 4px; text-align: center; color: #4b5563; }
+        .report-table td:nth-child(1), .rekap-table td:nth-child(1) { width: 30px; text-align: center; color: #6b7280; }
+        .report-table td:nth-child(2), .rekap-table td:nth-child(2) { text-align: left; position: sticky; left: 0; background: white; font-weight: 500; font-size: 12px; color: #374151; }
+        .report-table tbody tr:hover td:nth-child(2), .rekap-table tbody tr:hover td:nth-child(2) { background: #F0F9FF; }
+        .report-table tfoot td { font-size: 12px; padding: 4px; }
+
+        /* Database Table Styles */
+        .db-table th { font-size: 12px; padding: 8px; text-align: center; }
+        .db-table td { font-size: 13px; padding: 6px 8px; border-color: rgba(14, 165, 233, 0.15); color: #374151; }
+        .db-table tbody tr:hover { background: #F0F9FF; }
+
+        .dash-stat-card { transition: all 0.3s ease; }
+        .dash-stat-card:hover { transform: translateY(-5px); box-shadow: 0 10px 25px rgba(14, 165, 233, 0.15); }
+        .elegant-table { border-collapse: collapse; width: 100%; font-size: 0.875rem; }
+        .elegant-table thead th { background: transparent; color: #0369A1; font-weight: 600; text-transform: uppercase; font-size: 0.75rem; letter-spacing: 0.05em; border-bottom: 2px solid #E0F2FE; padding: 12px 8px; text-align: right; }
+        .elegant-table thead th:first-child { text-align: left; }
+        .elegant-table tbody td { padding: 10px 8px; color: #374151; border-bottom: 1px solid #F0F9FF; }
+        .elegant-table tbody td:nth-child(2), .elegant-table tbody td:nth-child(3) { text-align: right; font-weight: 600; }
+        .elegant-table tfoot td { padding: 10px 8px; font-weight: bold; color: #374151; }
+        .elegant-table tfoot td:nth-child(2), .elegant-table tfoot td:nth-child(3) { text-align: right; }
+        
+        /* Status Badges */
+        .badge { padding: 2px 8px; border-radius: 12px; font-size: 10px; font-weight: 700; text-transform: uppercase; }
+        .badge-active { background: #D1FAE5; color: #065F46; }
+        .badge-moved { background: #FEF3C7; color: #92400E; }
+        .badge-retired { background: #E5E7EB; color: #374151; }
+
+        /* Modal Styles */
+        .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.5); backdrop-filter: blur(2px); z-index: 2000; display: flex; align-items: center; justify-content: center; opacity: 0; visibility: hidden; transition: all 0.2s; }
+        .modal-overlay.show { opacity: 1; visibility: visible; }
+        .modal-content { background: white; border-radius: 16px; padding: 24px; width: 100%; max-width: 500px; box-shadow: 0 20px 50px rgba(0,0,0,0.2); transform: scale(0.9); transition: transform 0.2s; }
+        .modal-overlay.show .modal-content { transform: scale(1); }
+
+        /* Daily Activity List Style */
+        .activity-card { background: #F9FAFB; border: 1px solid #E5E7EB; border-radius: 8px; padding: 12px; margin-bottom: 8px; transition: all 0.2s; }
+        .activity-card:hover { border-color: #D1D5DB; background: #F3F4F6; }
+        .activity-badge { display: inline-block; padding: 2px 8px; border-radius: 9999px; font-size: 10px; font-weight: 700; text-transform: uppercase; }
+        
+        /* PRINT STYLES */
+        @media print {
+            .no-print, #bg-particles { display: none !important; }
+            body { background: white !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; margin: 0; padding: 0; }
+            .print-only { display: block !important; width: 100%; }
+            @page { size: A4; margin: 15mm; }
+            .print-page-block { page-break-after: always; }
+            .print-page-block:last-child { page-break-after: auto; }
+            .print-table { width: 100%; border-collapse: collapse; font-size: 10pt; margin-top: 0; } 
+            .print-table th, .print-table td { border: 1px solid black; padding: 4px 6px; }
+            .print-table thead th { background-color: #f0f0f0 !important; font-weight: bold; text-align: center; vertical-align: middle; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+            .print-table th:nth-child(2) { text-align: center !important; }
+            .print-table td:nth-child(2) { text-align: left; }
+            .print-table td:nth-child(3), .print-table td:nth-child(4), .print-table td:nth-child(5) { text-align: right; }
+            #printFootBruto, #printFootPph, #printFootNetto { text-align: right; }
+            #printSubBruto, #printSubPph, #printSubNetto { text-align: right; }
+            .print-header-area { text-align: center; margin-bottom: 20px; }
+            .print-header-area h1 { font-size: 14pt; }
+            .print-header-area h2 { font-size: 12pt; }
+            .nav-btn { display: none !important; }
+        }
+        .print-only { display: none; }
+        
+        @media (max-width: 768px) {
+            .sticky-col-2 { min-width: 180px; left: 40px; }
+            .sticky-col-3 { min-width: 50px; left: 220px; }
+            .sticky-col-4 { min-width: 80px; left: 270px; }
+            .sticky-col-1 { width: 40px; }
+            .schedule-table { font-size: 11px; }
+            .cell-wrapper { height: 45px; }
+        }
+    </style>
+</head>
+<body class="overflow-x-hidden">
+    <div id="bg-particles" class="no-print"></div>
+    
+    <!-- Modal Overlay -->
+    <div id="modalOverlay" class="modal-overlay no-print">
+        <div class="modal-content">
+            <h3 class="font-display text-xl font-bold text-gray-800 mb-4" id="modalTitle">Tambah Pegawai</h3>
+            <form id="employeeForm">
+                <input type="hidden" id="empId">
+                <input type="hidden" id="formContext">
+                <div class="grid grid-cols-1 gap-4 mb-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-600 mb-1">Nama Pegawai</label>
+                        <input type="text" id="formNamaText" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-sky-500 focus:border-sky-500" placeholder="Masukkan Nama Lengkap" required>
+                        <select id="formNamaSelect" class="hidden w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-sky-500 focus:border-sky-500">
+                            <option value="">-- Pilih dari Database --</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-600 mb-1">NIP Lama</label>
+                        <input type="text" id="formNipLama" class="w-full border border-gray-300 rounded-lg px-3 py-2 bg-gray-50" placeholder="Otomatis terisi">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-600 mb-1">NIP Baru</label>
+                        <input type="text" id="formNipBaru" class="w-full border border-gray-300 rounded-lg px-3 py-2 bg-gray-50" placeholder="Otomatis terisi">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-600 mb-1">Golongan</label>
+                        <select id="formGol" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-sky-500 focus:border-sky-500">
+                            <option value="">Pilih Golongan</option>
+                            <option value="II">II</option>
+                            <option value="III">III</option>
+                            <option value="IV">IV</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="flex justify-end gap-2">
+                    <button type="button" onclick="closeModal()" class="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300">Batal</button>
+                    <button type="submit" class="px-4 py-2 bg-sky-500 text-white rounded-lg hover:bg-sky-600">Simpan</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Main Application UI -->
+    <header class="menu-bar anim-slide no-print">
+        <div class="max-w-full mx-auto px-4">
+            <div class="flex items-center justify-between h-16">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-xl flex items-center justify-center shadow-inner overflow-hidden bg-white/10">
+                        <img src="https://z-cdn-media.chatglm.cn/files/b8bffa74-ccd7-43df-ac0a-7d38232e3901.png?auth_key=1872868863-b6cd966dc51a4c34aa738032b487a895-0-e6beed34fb7fb9a9650976366f590c26" alt="Logo BPS" class="w-full h-full object-contain p-1">
+                    </div>
+                    <h1 class="font-display text-xl md:text-2xl font-bold text-white tracking-wide">Matrik Kerja Pegawai</h1>
+                </div>
+                <nav class="hidden md:flex items-center h-full">
+                    <button class="tab-btn h-full px-4 active" data-tab="dashboard">Dashboard</button>
+                    <button class="tab-btn h-full px-4" data-tab="jadwal">Jadwal</button>
+                    <button class="tab-btn h-full px-4" data-tab="rekap">Rekap</button>
+                    <button class="tab-btn h-full px-4" data-tab="laporan">Laporan</button>
+                    <button class="tab-btn h-full px-4" data-tab="database">Database</button>
+                </nav>
+                <button id="menuToggle" class="md:hidden text-white p-2 rounded-lg hover:bg-white/10">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg>
+                </button>
+            </div>
+        </div>
+        <div id="mobileNav" class="hidden md:hidden border-t border-white/10 bg-black/10 px-4 py-2">
+             <button class="tab-btn w-full text-left py-2 active" data-tab="dashboard">Dashboard</button>
+            <button class="tab-btn w-full text-left py-2" data-tab="jadwal">Jadwal</button>
+            <button class="tab-btn w-full text-left py-2" data-tab="rekap">Rekap</button>
+            <button class="tab-btn w-full text-left py-2" data-tab="laporan">Laporan</button>
+            <button class="tab-btn w-full text-left py-2" data-tab="database">Database</button>
+        </div>
+    </header>
+
+    <main class="max-w-full mx-auto px-4 py-8 no-print">
+        <!-- TAB 1: DASHBOARD -->
+        <div id="content-dashboard">
+            <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
+                <div>
+                    <h2 class="font-display text-2xl font-bold text-gray-800">Monitoring Kegiatan & Uang Makan</h2>
+                    <p class="text-gray-500 text-sm">Rekapitulasi data tahun <span id="dash-year-label" class="font-semibold text-sky-600">2025</span></p>
+                </div>
+                <div class="flex flex-col sm:flex-row gap-2 w-full md:w-auto items-center">
+                    <div class="flex gap-2 w-full sm:w-auto">
+                         <button id="btnExport" class="ctrl-btn ctrl-btn-green px-4 h-11 rounded-xl text-sm w-full sm:w-auto" title="Download File JSON">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+                            <span>Export</span>
+                        </button>
+                        <input type="file" id="importFile" accept=".json" class="hidden">
+                        <button id="btnImport" class="ctrl-btn ctrl-btn-orange px-4 h-11 rounded-xl text-sm w-full sm:w-auto" title="Upload File JSON">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg>
+                            <span>Import</span>
+                        </button>
+                    </div>
+                    <select id="yearSelectDash" class="custom-select w-full sm:w-28 h-11"></select>
+                </div>
+            </div>
+            <!-- Stats Cards -->
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6 mb-8">
+                <div class="dash-stat-card glass-card rounded-xl p-5 anim-fade">
+                    <div class="flex items-center justify-between">
+                        <div><p class="text-xs text-gray-500 uppercase font-semibold">Pegawai Aktif</p><p class="text-2xl font-bold text-sky-600 mt-1" id="dash-total-emp">0</p></div>
+                        <div class="w-10 h-10 rounded-full bg-sky-100 flex items-center justify-center"><svg class="w-5 h-5 text-sky-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"></path></svg></div>
+                    </div>
+                </div>
+                <div class="dash-stat-card glass-card rounded-xl p-5 anim-fade d1">
+                    <div class="flex items-center justify-between">
+                        <div><p class="text-xs text-gray-500 uppercase font-semibold">Total Hari Kerja</p><p class="text-2xl font-bold text-green-600 mt-1" id="dash-total-days">0</p></div>
+                        <div class="w-10 h-10 rounded-full bg-green-100 flex items-center justify-center"><svg class="w-5 h-5 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg></div>
+                    </div>
+                </div>
+                <div class="dash-stat-card glass-card rounded-xl p-5 anim-fade d2">
+                    <div class="flex items-center justify-between">
+                        <div><p class="text-xs text-gray-500 uppercase font-semibold">Total Bruto (Rp)</p><p class="text-xl font-bold text-blue-600 mt-1" id="dash-total-bruto">0</p></div>
+                        <div class="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center"><svg class="w-5 h-5 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg></div>
+                    </div>
+                </div>
+                <div class="dash-stat-card glass-card rounded-xl p-5 anim-fade d3">
+                    <div class="flex items-center justify-between">
+                        <div><p class="text-xs text-gray-500 uppercase font-semibold">Total PPh 21 (Rp)</p><p class="text-xl font-bold text-red-500 mt-1" id="dash-total-pph">0</p></div>
+                        <div class="w-10 h-10 rounded-full bg-red-100 flex items-center justify-center"><svg class="w-5 h-5 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 14l6-6m-5.5.5h.01m4.99 5h.01M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16l3.5-2 3.5 2 3.5-2 3.5 2z"></path></svg></div>
+                    </div>
+                </div>
+            </div>
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                <!-- Left Column: Monthly Recap -->
+                <div class="glass-card rounded-2xl p-6 anim-fade d1">
+                    <h3 class="font-display text-lg font-bold text-gray-700 mb-2">Rekapitulasi Bulanan</h3>
+                    <p class="text-xs text-gray-500 mb-4 italic">*Hanya menghitung pegawai dengan status <strong>Aktif</strong>.</p>
+                    <div class="overflow-hidden">
+                        <table class="elegant-table">
+                            <thead><tr><th>Bulan</th><th>Total Bruto (Rp)</th><th>Total PPh 21 (Rp)</th></tr></thead>
+                            <tbody id="dashTableBody"></tbody>
+                            <tfoot class="border-t-2 border-sky-100 font-bold text-gray-800 bg-sky-50/50">
+                                <tr>
+                                    <td class="rounded-bl-lg">TOTAL TAHUN</td>
+                                    <td id="dashFootBruto" class="text-sky-700">0</td>
+                                    <td id="dashFootPph" class="rounded-br-lg text-red-600">0</td>
+                                </tr>
+                            </tfoot>
+                        </table>
+                    </div>
+                </div>
+                
+                <!-- Right Column: Daily Activity -->
+                <div class="glass-card rounded-2xl p-6 anim-fade d2 relative overflow-hidden">
+                    <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-2 mb-4">
+                        <h3 class="font-display text-lg font-bold text-gray-700">Data Kegiatan Harian Pegawai</h3>
+                        <div class="flex items-center gap-2 w-full md:w-auto">
+                            <input type="date" id="dashDateFilter" class="border border-gray-300 rounded-lg px-3 py-1.5 text-sm focus:ring-2 focus:ring-sky-500 focus:border-sky-500 w-full md:w-auto">
+                            <button onclick="resetDashDate()" class="nav-btn whitespace-nowrap text-xs">Hari Ini</button>
+                        </div>
+                    </div>
+                    <div id="dailyActivityList" class="space-y-2 max-h-[400px] overflow-y-auto pr-2">
+                        <!-- Injected by JS -->
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- TAB 2: JADWAL KEGIATAN -->
+        <div id="content-jadwal" class="hidden">
+            <div class="glass-card rounded-2xl p-6 mb-8 anim-fade d1">
+                <div class="flex flex-col md:flex-row items-center justify-between gap-4">
+                    <div class="flex items-center gap-3 w-full md:w-auto">
+                        <select id="monthSelect" class="custom-select w-full md:w-40"></select>
+                        <select id="yearSelect" class="custom-select w-full md:w-28"></select>
+                    </div>
+                    <div class="flex items-center gap-2 w-full md:w-auto justify-end">
+                        <button id="btnAddSchedule" class="ctrl-btn ctrl-btn-green px-4 h-11 rounded-xl text-sm" title="Tambah Pegawai ke Bulan Ini">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path></svg>
+                            <span>Tambah</span>
+                        </button>
+                        <button id="btnToday" class="ctrl-btn px-5 h-11 rounded-xl text-sm w-full md:w-auto">Hari Ini</button>
+                    </div>
+                </div>
+            </div>
+            <div class="glass-card rounded-xl p-4 mb-6 anim-fade d1">
+                <div class="w-full text-center">
+                    <h3 class="font-bold text-gray-700 text-lg uppercase tracking-wide">PERIODE : <span id="period-display" class="text-sky-600">Januari 2025</span></h3>
+                    <p class="text-xs text-gray-500 mt-1">Klik Header Tanggal untuk Hari Libur.</p>
+                </div>
+            </div>
+            <div class="glass-card rounded-2xl overflow-hidden anim-fade d2">
+                <div class="table-wrapper overflow-auto max-h-[70vh]" id="tableScroll">
+                    <table class="schedule-table">
+                        <thead id="thead"></thead>
+                        <tbody id="tbody"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- TAB 3: REKAP KEGIATAN -->
+        <div id="content-rekap" class="hidden">
+            <div class="glass-card rounded-2xl p-6 mb-6 anim-fade d1">
+                <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                    <div>
+                        <h2 class="font-display text-2xl font-bold text-gray-800 uppercase tracking-wide">REKAP KEGIATAN</h2>
+                        <p id="rekapPeriod" class="text-md text-gray-600 font-semibold mt-1">PERIODE : Januari 2025</p>
+                    </div>
+                    <div class="flex items-center gap-3">
+                        <select id="monthSelectRekap" class="custom-select w-40 h-11"></select>
+                        <select id="yearSelectRekap" class="custom-select w-28 h-11"></select>
+                    </div>
+                </div>
+            </div>
+            <div class="glass-card rounded-2xl overflow-hidden anim-fade d2">
+                <div class="table-wrapper overflow-auto max-h-[65vh]">
+                    <table class="rekap-table w-full">
+                        <thead>
+                            <tr>
+                                <th class="px-4 py-3">No</th>
+                                <th class="px-4 py-3 text-left">Nama Pegawai</th>
+                                <th class="px-2 py-3 text-center">Perjadin</th>
+                                <th class="px-2 py-3 text-center">Translok</th>
+                                <th class="px-2 py-3 text-center">Cuti</th>
+                                <th class="px-2 py-3 text-center">Breefing</th>
+                                <th class="px-2 py-3 text-center">Daring</th>
+                            </tr>
+                        </thead>
+                        <tbody id="rekapBody"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- TAB 4: LAPORAN BULANAN -->
+        <div id="content-laporan" class="hidden">
+            <div class="glass-card rounded-2xl p-6 mb-6 anim-fade d1">
+                <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                    <div>
+                        <h2 class="font-display text-2xl font-bold text-gray-800 uppercase tracking-wide">PERHITUNGAN UANG MAKAN</h2>
+                        <p id="reportPeriod" class="text-md text-gray-600 font-semibold mt-1">Periode : Januari 2025</p>
+                    </div>
+                    <div class="flex items-center gap-3">
+                        <button onclick="changeReportPeriod(-1)" class="nav-btn" title="Bulan Sebelumnya">← Prev</button>
+                        <button onclick="changeReportPeriod(1)" class="nav-btn" title="Bulan Berikutnya">Next →</button>
+                    </div>
+                </div>
+            </div>
+            <div class="mb-4">
+                <button id="btnPrint" class="ctrl-btn ctrl-btn-blue px-6 h-12 rounded-xl text-base">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path></svg>
+                    Cetak Dokumen
+                </button>
+            </div>
+            <div class="glass-card rounded-2xl overflow-hidden anim-fade d2">
+                <div class="table-wrapper overflow-auto max-h-[65vh]">
+                    <table class="report-table w-full">
+                        <thead>
+                            <tr>
+                                <th class="px-3 py-2">No</th>
+                                <th class="px-3 py-2 text-left">Nama Pegawai</th>
+                                <th class="px-3 py-2">Gol</th>
+                                <th class="px-3 py-2">Hari</th>
+                                <th class="px-3 py-2"><div>Jumlah Bruto</div><div class="text-[10px] font-normal opacity-80">(Rp.)</div></th>
+                                <th class="px-3 py-2"><div>Potongan PPh 21</div><div class="text-[10px] font-normal opacity-80">(Rp.)</div></th>
+                                <th class="px-3 py-2"><div>Jumlah Diterima</div><div class="text-[10px] font-normal opacity-80">(Rp.)</div></th>
+                            </tr>
+                        </thead>
+                        <tbody id="reportBody"></tbody>
+                        <tfoot>
+                            <tr class="bg-gray-100 font-bold text-gray-800 border-t-2 border-gray-300 text-xs">
+                                <td colspan="3" class="px-3 py-2 text-right">TOTAL</td>
+                                <td id="totalDays" class="px-3 py-2 text-center font-bold">0</td>
+                                <td id="totalBruto" class="px-3 py-2 text-right font-bold">0</td>
+                                <td id="totalPph" class="px-3 py-2 text-right font-bold">0</td>
+                                <td id="totalNetto" class="px-3 py-2 text-right font-bold">0</td>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- TAB 5: DATABASE PEGAWAI -->
+        <div id="content-database" class="hidden">
+            <div class="glass-card rounded-2xl p-6 mb-6 anim-fade d1">
+                <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                    <div>
+                        <h2 class="font-display text-2xl font-bold text-gray-800 uppercase tracking-wide">Database Master</h2>
+                        <p class="text-md text-gray-600 font-semibold mt-1">Kelola data induk pegawai</p>
+                    </div>
+                    <div class="flex items-center gap-3">
+                        <button onclick="openModal()" class="ctrl-btn ctrl-btn-green px-4 h-11 rounded-xl text-sm">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path></svg>
+                            Tambah Pegawai
+                        </button>
+                    </div>
+                </div>
+            </div>
+            <div class="glass-card rounded-2xl overflow-hidden anim-fade d2">
+                <div class="table-wrapper overflow-auto max-h-[65vh]">
+                    <table class="db-table w-full">
+                        <thead>
+                            <tr>
+                                <th style="width: 40px;">No</th>
+                                <th>NIP Lama</th>
+                                <th>NIP Baru</th>
+                                <th>Nama Pegawai</th>
+                                <th style="width: 60px;">Gol</th>
+                                <th style="width: 80px;">Status</th>
+                                <th style="width: 200px;">Aksi</th>
+                            </tr>
+                        </thead>
+                        <tbody id="dbBody"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- PRINT AREA -->
+    <div id="printArea" class="print-only"></div>
+
+    <!-- Dropdowns -->
+    <div id="dropdown-status" class="dropdown-menu no-print">
+        <div class="dropdown-item text-status-Perjadin" data-val="Perjadin"><span>Perjadin</span></div>
+        <div class="dropdown-item text-status-Translok" data-val="Translok"><span>Translok</span></div>
+        <div class="dropdown-item text-status-Cuti" data-val="Cuti"><span>Cuti</span></div>
+        <div class="dropdown-item text-status-Breefing" data-val="Breefing"><span>Breefing</span></div>
+        <div class="dropdown-item text-status-Daring" data-val="Daring"><span>Daring</span></div>
+        <div class="border-t border-gray-100 mt-1 pt-1"><div class="dropdown-item text-gray-500" data-val=""><span>Hapus</span></div></div>
+    </div>
+    <div id="dropdown-gol" class="dropdown-menu no-print">
+        <div class="dropdown-item" data-val="II"><span>Gol II</span></div>
+        <div class="dropdown-item" data-val="III"><span>Gol III</span></div>
+        <div class="dropdown-item" data-val="IV"><span>Gol IV</span></div>
+        <div class="border-t border-gray-100 mt-1 pt-1"><div class="dropdown-item text-gray-500" data-val=""><span>Hapus</span></div></div>
+    </div>
+
+    <script>
+        // === INITIAL DATA ===
+        const DEFAULT_EMPLOYEES = [
+            { nip_lama: '340015008', nip_baru: '197008181994121001', nama: 'Guswandi SST', gol: 'IV', status: 'active' },
+            { nip_lama: '340016249', nip_baru: '197905012000122002', nama: 'Meita Komalasari, S.ST, M.Si.', gol: 'IV', status: 'active' },
+            { nip_lama: '340054236', nip_baru: '198611092010121008', nama: 'Wahyu Adhiputra SST', gol: 'III', status: 'active' },
+            { nip_lama: '340016572', nip_baru: '197202212002121002', nama: 'Mangatur Manurung, S.Si, M.Si.', gol: 'IV', status: 'active' },
+            { nip_lama: '340017676', nip_baru: '197902042005022002', nama: 'Arie Nurlaela, A.Md., S.Stat.', gol: 'III', status: 'active' },
+            { nip_lama: '340050085', nip_baru: '198611032009022009', nama: 'Fajar Maulinda, SST, M.E.K.K', gol: 'III', status: 'active' },
+            { nip_lama: '340020080', nip_baru: '198609202008012002', nama: 'Desi Damaiyanti, SST, M.E.', gol: 'III', status: 'active' },
+            { nip_lama: '340050120', nip_baru: '198603102009022005', nama: 'Ifra Warnita, SST, M.E.K.K', gol: 'III', status: 'active' },
+            { nip_lama: '340050246', nip_baru: '198703042009022003', nama: 'Suci Dwi Martiani, SST', gol: 'IV', status: 'active' },
+            { nip_lama: '340019145', nip_baru: '198206162007011009', nama: 'Aulia Hasif, SST, M.Si', gol: 'IV', status: 'active' }, 
+            { nip_lama: '340017483', nip_baru: '197405052005021001', nama: 'Sugiman, S.Kom', gol: 'III', status: 'active' },
+            { nip_lama: '340053268', nip_baru: '198702192009122005', nama: 'Noliza, SST', gol: 'III', status: 'active' },
+            { nip_lama: '340053522', nip_baru: '198702152010032002', nama: 'Lola Netty, S.Stat', gol: 'III', status: 'active' },
+            { nip_lama: '340055811', nip_baru: '198908292012112001', nama: 'Imelda Andriani, SST', gol: 'III', status: 'active' },
+            { nip_lama: '340055857', nip_baru: '198811262012111001', nama: 'Nasrul Saputra, SST', gol: 'III', status: 'active' },
+            { nip_lama: '340056244', nip_baru: '199005262013112001', nama: 'Dessy Syukriya Aryati, SST', gol: 'III', status: 'active' },
+            { nip_lama: '340018058', nip_baru: '198212182006041001', nama: 'Erwhin Widyanto, S.E', gol: 'III', status: 'active' },
+            { nip_lama: '340056496', nip_baru: '198812232014031002', nama: 'Benny Dwi Kifana, ST, M.Si', gol: 'III', status: 'active' },
+            { nip_lama: '340017478', nip_baru: '198604252005022001', nama: 'Ira Maharisa, SE, MM', gol: 'III', status: 'active' },
+            { nip_lama: '340017479', nip_baru: '197207032005021001', nama: 'Marlis, SE', gol: 'III', status: 'active' },
+            { nip_lama: '340056269', nip_baru: '199103152013112001', nama: 'Erika Sari, SST', gol: 'III', status: 'active' },
+            { nip_lama: '340057861', nip_baru: '199407092017012002', nama: 'Yuli Hairani, SST', gol: 'III', status: 'active' },
+            { nip_lama: '340058394', nip_baru: '199503082018022001', nama: 'Mutiara Rintia Asnuri Putri, SST', gol: 'III', status: 'active' },
+            { nip_lama: '079999998', nip_baru: '198112142010121001', nama: 'Ujang Nurhidayat, S.Kom', gol: 'III', status: 'active' },
+            { nip_lama: '340016842', nip_baru: '197301032002121003', nama: 'Rudiarman, SE', gol: 'III', status: 'active' },
+            { nip_lama: '340019330', nip_baru: '197901052007011001', nama: 'Razaliana, S.Sos', gol: 'III', status: 'active' },
+            { nip_lama: '340015657', nip_baru: '197411121998031001', nama: 'Erlius Natalis Bancin', gol: 'III', status: 'active' },
+            { nip_lama: '340058952', nip_baru: '199609192019012003', nama: 'Rizka Heryanti, S.Tr.Stat.', gol: 'III', status: 'active' },
+            { nip_lama: '340059151', nip_baru: '199607272019032001', nama: 'Reny Roswita Nazar, S.Stat.', gol: 'III', status: 'active' },
+            { nip_lama: '340059703', nip_baru: '199607212019122001', nama: 'Poppi Rahma Nanda, S.Tr.Stat.', gol: 'III', status: 'active' },
+            { nip_lama: '340019397', nip_baru: '196902022007012003', nama: 'Nia Feriwati, S.Pt', gol: 'III', status: 'active' },
+            { nip_lama: '340051336', nip_baru: '198507062009021008', nama: 'Sumarlin, A.Md', gol: 'III', status: 'active' },
+            { nip_lama: '340051072', nip_baru: '198512102009021009', nama: 'Danang Gunawan, A.Md', gol: 'III', status: 'active' },
+            { nip_lama: '340052212', nip_baru: '197606122009011004', nama: 'Musmuliadi, SE', gol: 'III', status: 'active' },
+            { nip_lama: '340060838', nip_baru: '199903032022012002', nama: 'Nurul Handayani, S.Tr.Stat.', gol: 'III', status: 'active' },
+            { nip_lama: '340063083', nip_baru: '200201052024122003', nama: 'Callista Luthfiyah Cahyani, S.Tr.Stat.', gol: 'III', status: 'active' },
+            { nip_lama: '340066519', nip_baru: '200102252026032001', nama: 'Sofi Zamzanah, S.Tr.Stat.', gol: 'III', status: 'active' },
+            { nip_lama: '340020488', nip_baru: '197504272007101001', nama: 'I Putu Diastudi', gol: 'III', status: 'active' },
+            { nip_lama: '340018036', nip_baru: '198602222006041004', nama: 'Hari Pebriyanto', gol: 'III', status: 'active' },
+            { nip_lama: '340018037', nip_baru: '198610122006042002', nama: 'Oktaviani Armina', gol: 'III', status: 'active' },
+            { nip_lama: '340065009', nip_baru: '199709182025211024', nama: 'Lutfhi Sundoro, S.E.', gol: 'III', status: 'active' },
+            { nip_lama: '340065565', nip_baru: '199510292025211027', nama: 'Rushi Dayat Tullah', gol: 'II', status: 'active' },
+            { nip_lama: '340064139', nip_baru: '198603212025211034', nama: 'Alfandra', gol: 'II', status: 'active' }
+        ];
+
+        const MONTHS = ["Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember"];
+        const DAYS = ["Min", "Sen", "Sel", "Rab", "Kam", "Jum", "Sab"];
+        const HOLIDAYS = { '2025-01-01': 'Tahun Baru', '2025-01-29': 'Imlek', '2025-03-29': 'Nyepi', '2025-03-31': 'Idul Fitri', '2025-04-01': 'Idul Fitri', '2025-04-18': 'Wafat Isa Almasih', '2025-05-01': 'Hari Buruh', '2025-05-12': 'Waisak', '2025-05-29': 'Kenaikan Isa Almasih', '2025-06-01': 'Hari Lahir Pancasila', '2025-06-06': 'Idul Adha', '2025-06-27': 'Tahun Baru Islam', '2025-08-17': 'Hari Kemerdekaan', '2025-09-05': 'Maulid Nabi', '2025-12-25': 'Hari Natal' };
+        const RATES = { 'II': 35000, 'III': 37000, 'IV': 41000 };
+        const TAX_RATES = { 'II': 0, 'III': 0.05, 'IV': 0.15 };
+        const STATUS_TYPES = ['Perjadin', 'Translok', 'Cuti', 'Breefing', 'Daring']; 
+
+        // === STATE MANAGEMENT ===
+        const STORAGE_KEY = 'matrik_kerja_data_v34'; 
+        const defaultState = { month: new Date().getMonth(), year: new Date().getFullYear(), scheduleData: {}, employees: [], activeTab: 'dashboard' };
+        
+        function loadState() { 
+            try { 
+                const saved = localStorage.getItem(STORAGE_KEY); 
+                if (saved) { 
+                    const parsed = JSON.parse(saved); 
+                    if (!parsed.employees || parsed.employees.length === 0) parsed.employees = DEFAULT_EMPLOYEES;
+                    parsed.employees.forEach(emp => { if(!emp.status) emp.status = 'active'; });
+                    
+                    if(parsed.scheduleData) {
+                        Object.keys(parsed.scheduleData).forEach(key => {
+                            const monthData = parsed.scheduleData[key];
+                            if (!monthData.staff) {
+                                const newStaff = parsed.employees.filter(e => e.status === 'active').map((emp) => { return { ...emp, schedule: {} }; });
+                                parsed.scheduleData[key] = { staff: newStaff, customHolidays: monthData.customHolidays || [] };
+                            }
+                        });
+                    }
+                    return { ...defaultState, ...parsed }; 
+                } 
+            } catch (e) { console.error("Error loading state", e); } 
+            return { ...defaultState, employees: DEFAULT_EMPLOYEES }; 
+        }
+        function saveState() { try { const toSave = { ...state, activeTab: 'dashboard' }; localStorage.setItem(STORAGE_KEY, JSON.stringify(toSave)); } catch (e) { console.error("Error saving state", e); } }
+        let state = loadState();
+
+        // === DOM ELEMENTS & INIT ===
+        const $monthSelect = document.getElementById('monthSelect'); const $yearSelect = document.getElementById('yearSelect'); const $yearSelectDash = document.getElementById('yearSelectDash');
+        const $monthSelectRekap = document.getElementById('monthSelectRekap'); const $yearSelectRekap = document.getElementById('yearSelectRekap');
+        const $thead = document.getElementById('thead'); const $tbody = document.getElementById('tbody'); 
+        const $reportBody = document.getElementById('reportBody'); const $reportPeriod = document.getElementById('reportPeriod');
+        const $rekapBody = document.getElementById('rekapBody'); const $rekapPeriod = document.getElementById('rekapPeriod');
+        const $periodDisplay = document.getElementById('period-display');
+        const $dropdownStatus = document.getElementById('dropdown-status'); const $dropdownGol = document.getElementById('dropdown-gol'); const $tableWrapper = document.querySelector('.table-wrapper');
+        const $btnExport = document.getElementById('btnExport'); const $btnImport = document.getElementById('btnImport'); const $importFile = document.getElementById('importFile');
+        const $btnPrint = document.getElementById('btnPrint');
+        const $dbBody = document.getElementById('dbBody');
+        const $modalOverlay = document.getElementById('modalOverlay');
+        const $employeeForm = document.getElementById('employeeForm');
+        
+        let activeCell = null; let activeDropdownType = null;
+
+        function initSelectors() {
+            MONTHS.forEach((m, i) => { const opt = document.createElement('option'); opt.value = i; opt.textContent = m; $monthSelect.appendChild(opt); }); $monthSelect.value = state.month;
+            MONTHS.forEach((m, i) => { const opt = document.createElement('option'); opt.value = i; opt.textContent = m; $monthSelectRekap.appendChild(opt); }); $monthSelectRekap.value = state.month;
+            const currentY = new Date().getFullYear();
+            for (let y = currentY - 2; y <= currentY + 5; y++) { const opt = document.createElement('option'); opt.value = y; opt.textContent = y; $yearSelect.appendChild(opt); } $yearSelect.value = state.year;
+            for (let y = currentY - 2; y <= currentY + 5; y++) { const opt = document.createElement('option'); opt.value = y; opt.textContent = y; $yearSelectDash.appendChild(opt); } $yearSelectDash.value = state.year;
+            for (let y = currentY - 2; y <= currentY + 5; y++) { const opt = document.createElement('option'); opt.value = y; opt.textContent = y; $yearSelectRekap.appendChild(opt); } $yearSelectRekap.value = state.year;
+            $monthSelect.addEventListener('change', (e) => { state.month = parseInt(e.target.value); render(); saveState(); });
+            $yearSelect.addEventListener('change', (e) => { state.year = parseInt(e.target.value); render(); saveState(); });
+            $monthSelectRekap.addEventListener('change', (e) => { state.month = parseInt(e.target.value); renderRekap(); saveState(); });
+            $yearSelectRekap.addEventListener('change', (e) => { state.year = parseInt(e.target.value); renderRekap(); saveState(); });
+            $yearSelectDash.addEventListener('change', (e) => { state.year = parseInt(e.target.value); renderDashboard(); saveState(); });
+            document.getElementById('btnToday').addEventListener('click', () => { const t = new Date(); state.month = t.getMonth(); state.year = t.getFullYear(); $monthSelect.value = state.month; $yearSelect.value = state.year; render(); saveState(); });
+            document.getElementById('btnAddSchedule').addEventListener('click', () => { openModal(null, 'schedule'); });
+        }
+
+        function initTabs() {
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const tab = btn.dataset.tab; state.activeTab = tab;
+                    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active')); document.querySelectorAll(`.tab-btn[data-tab="${tab}"]`).forEach(b => b.classList.add('active'));
+                    document.getElementById('content-dashboard').classList.toggle('hidden', tab !== 'dashboard');
+                    document.getElementById('content-jadwal').classList.toggle('hidden', tab !== 'jadwal');
+                    document.getElementById('content-rekap').classList.toggle('hidden', tab !== 'rekap');
+                    document.getElementById('content-laporan').classList.toggle('hidden', tab !== 'laporan');
+                    document.getElementById('content-database').classList.toggle('hidden', tab !== 'database');
+                    if(tab === 'dashboard') renderDashboard(); if(tab === 'jadwal') render(); if(tab === 'rekap') renderRekap(); if(tab === 'laporan') renderReport(); if(tab === 'database') renderDatabase();
+                });
+            });
+        }
+
+        function getMonthData(y = state.year, m = state.month) {
+            const monthKey = getMonthKey(y, m);
+            if (!state.scheduleData[monthKey]) {
+                const staffCopy = JSON.parse(JSON.stringify(state.employees.filter(e => e.status === 'active')));
+                staffCopy.forEach(emp => emp.schedule = {});
+                state.scheduleData[monthKey] = { staff: staffCopy, customHolidays: [] };
+            }
+            return state.scheduleData[monthKey];
+        }
+
+        // === DATABASE FUNCTIONS (MASTER) ===
+        function renderDatabase() {
+            let html = '';
+            state.employees.forEach((emp, idx) => {
+                const statusBadge = emp.status === 'active' ? `<span class="badge badge-active">Aktif</span>` : 
+                                    emp.status === 'moved' ? `<span class="badge badge-moved">Pindah</span>` : 
+                                    emp.status === 'retired' ? `<span class="badge badge-retired">Pensiun</span>` : '';
+                
+                let actionBtns = `<button onclick="editEmployeeMaster(${idx})" class="action-btn action-btn-edit">Edit</button>`;
+                if(emp.status === 'active') {
+                    actionBtns += `
+                        <button onclick="setEmployeeStatus(${idx}, 'moved')" class="action-btn action-btn-warning">Pindah</button>
+                        <button onclick="setEmployeeStatus(${idx}, 'retired')" class="action-btn action-btn-status">Pensiun</button>`;
+                } else {
+                     actionBtns += `<button onclick="setEmployeeStatus(${idx}, 'active')" class="action-btn action-btn-status">Aktifkan</button>`;
+                }
+                actionBtns += `<button onclick="deleteEmployeeMaster(${idx})" class="action-btn action-btn-delete">Hapus</button>`;
+
+                const rowClass = emp.status === 'active' ? '' : 'opacity-60 bg-gray-50';
+                
+                html += `<tr class="hover:bg-gray-50 ${rowClass}">
+                    <td class="px-4 py-2 border text-center">${idx + 1}</td>
+                    <td class="px-4 py-2 border text-xs">${emp.nip_lama}</td>
+                    <td class="px-4 py-2 border text-xs">${emp.nip_baru}</td>
+                    <td class="px-4 py-2 border font-medium">${emp.nama}</td>
+                    <td class="px-4 py-2 border text-center font-bold">${emp.gol || '-'}</td>
+                    <td class="px-4 py-2 border text-center">${statusBadge}</td>
+                    <td class="px-4 py-2 border text-center whitespace-nowrap">${actionBtns}</td>
+                </tr>`;
+            });
+            $dbBody.innerHTML = html;
+        }
+
+        window.editEmployeeMaster = function(idx) { openModal(idx, 'database'); };
+        
+        window.setEmployeeStatus = function(idx, newStatus) {
+            state.employees[idx].status = newStatus;
+            saveState();
+            renderDatabase();
+            renderDashboard();
+        };
+
+        window.deleteEmployeeMaster = function(idx) {
+            if(confirm('Hapus permanen dari Database?') ) {
+                state.employees.splice(idx, 1);
+                saveState();
+                renderDatabase();
+                renderDashboard();
+            }
+        };
+
+        // === SCHEDULE FUNCTIONS ===
+        window.editEmployeeSchedule = function(idx) { openModal(idx, 'schedule'); };
+        window.deleteEmployeeSchedule = function(idx) {
+            const monthData = getMonthData();
+            if(confirm('Hapus pegawai dari jadwal bulan ini?') ) {
+                monthData.staff.splice(idx, 1);
+                saveState();
+                render();
+                renderDashboard();
+            }
+        };
+
+        function openModal(idx = null, context = 'database') {
+            $employeeForm.reset();
+            document.getElementById('empId').value = '';
+            document.getElementById('formContext').value = context;
+            
+            const textInput = document.getElementById('formNamaText');
+            const selectInput = document.getElementById('formNamaSelect');
+            
+            if (context === 'schedule') {
+                textInput.classList.add('hidden');
+                selectInput.classList.remove('hidden');
+                textInput.required = false;
+                selectInput.required = true;
+                
+                const monthData = getMonthData();
+                const existingIds = new Set(monthData.staff.map(s => s.nip_baru));
+                
+                selectInput.innerHTML = '<option value="">-- Pilih dari Database --</option>';
+                state.employees.filter(e => e.status === 'active').forEach((emp) => {
+                    const realIdx = state.employees.indexOf(emp);
+                    if (idx === null && existingIds.has(emp.nip_baru)) return;
+                    selectInput.innerHTML += `<option value="${realIdx}">${emp.nama}</option>`;
+                });
+
+                selectInput.onchange = () => {
+                    const selectedIdx = selectInput.value;
+                    if(selectedIdx !== "") {
+                        const emp = state.employees[selectedIdx];
+                        document.getElementById('formNipLama').value = emp.nip_lama;
+                        document.getElementById('formNipBaru').value = emp.nip_baru;
+                        document.getElementById('formGol').value = emp.gol;
+                    } else {
+                        document.getElementById('formNipLama').value = '';
+                        document.getElementById('formNipBaru').value = '';
+                        document.getElementById('formGol').value = '';
+                    }
+                };
+
+                if (idx !== null) {
+                    const emp = monthData.staff[idx];
+                    document.getElementById('empId').value = idx;
+                    
+                    const masterIdx = state.employees.findIndex(e => e.nip_baru === emp.nip_baru);
+                    if (masterIdx !== -1) {
+                        selectInput.value = masterIdx;
+                        document.getElementById('formNipLama').value = emp.nip_lama;
+                        document.getElementById('formNipBaru').value = emp.nip_baru;
+                        document.getElementById('formGol').value = emp.gol;
+                    } else {
+                        document.getElementById('formNipLama').value = emp.nip_lama;
+                        document.getElementById('formNipBaru').value = emp.nip_baru;
+                        document.getElementById('formGol').value = emp.gol;
+                    }
+                    document.getElementById('modalTitle').innerText = "Edit Pegawai Bulan Ini";
+                } else {
+                    document.getElementById('modalTitle').innerText = "Tambah Pegawai";
+                }
+            } 
+            else {
+                textInput.classList.remove('hidden');
+                selectInput.classList.add('hidden');
+                textInput.required = true;
+                selectInput.required = false;
+                selectInput.onchange = null; 
+
+                if (idx !== null) {
+                    const emp = state.employees[idx];
+                    document.getElementById('empId').value = idx;
+                    document.getElementById('formNipLama').value = emp.nip_lama;
+                    document.getElementById('formNipBaru').value = emp.nip_baru;
+                    document.getElementById('formNamaText').value = emp.nama;
+                    document.getElementById('formGol').value = emp.gol;
+                    document.getElementById('modalTitle').innerText = "Edit Master Data";
+                } else {
+                    document.getElementById('modalTitle').innerText = "Tambah Pegawai Master";
+                }
+            }
+            
+            $modalOverlay.classList.add('show');
+        }
+
+        function closeModal() { $modalOverlay.classList.remove('show'); }
+
+        $employeeForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const id = document.getElementById('empId').value;
+            const context = document.getElementById('formContext').value;
+            
+            const newEmp = {
+                nip_lama: document.getElementById('formNipLama').value,
+                nip_baru: document.getElementById('formNipBaru').value,
+                nama: '', 
+                gol: document.getElementById('formGol').value,
+                schedule: {},
+                status: 'active'
+            };
+
+            if (context === 'schedule') {
+                const selectInput = document.getElementById('formNamaSelect');
+                const selectedIdx = selectInput.value;
+                
+                if(selectedIdx === "" && id === "") { alert("Silakan pilih pegawai."); return; }
+                
+                if(selectedIdx !== "") {
+                     newEmp.nama = state.employees[selectedIdx].nama;
+                } else {
+                    const monthData = getMonthData();
+                    newEmp.nama = monthData.staff[id].nama;
+                }
+
+                const monthData = getMonthData();
+                if (id !== '') {
+                    const existingSchedule = monthData.staff[parseInt(id)].schedule;
+                    newEmp.schedule = existingSchedule;
+                    monthData.staff[parseInt(id)] = newEmp;
+                } else {
+                    monthData.staff.push(newEmp);
+                }
+                render();
+            } else {
+                newEmp.nama = document.getElementById('formNamaText').value;
+                if (id !== '') {
+                    newEmp.status = state.employees[parseInt(id)].status || 'active';
+                    state.employees[parseInt(id)] = newEmp;
+                } else {
+                    state.employees.push(newEmp);
+                }
+                renderDatabase();
+                renderDashboard();
+            }
+            
+            saveState();
+            closeModal();
+        });
+
+        // === EXPORT/IMPORT ===
+        function exportData() {
+            try {
+                const dataStr = JSON.stringify(state, null, 2); const dataUri = 'data:application/json;charset=utf-8,' + encodeURIComponent(dataStr);
+                const exportFileDefaultName = `matrik_kerja_backup_${state.year}.json`; const linkElement = document.createElement('a');
+                linkElement.setAttribute('href', dataUri); linkElement.setAttribute('download', exportFileDefaultName);
+                document.body.appendChild(linkElement); linkElement.click(); document.body.removeChild(linkElement);
+            } catch (err) { console.error('Export failed', err); alert('Gagal mengekspor data.'); }
+        }
+        function triggerImport() { $importFile.click(); }
+        function handleFileImport(event) {
+            const file = event.target.files[0]; if (!file) return;
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const json = JSON.parse(e.target.result);
+                    if (json && typeof json.scheduleData === 'object' && Array.isArray(json.employees)) {
+                        if (confirm('Apakah Anda yakin ingin mengimpor data ini?') ) {
+                            state = json; 
+                            state.employees.forEach(e => { if(!e.status) e.status = 'active'; });
+                            saveState();
+                            $monthSelect.value = state.month; $yearSelect.value = state.year; $yearSelectDash.value = state.year;
+                            $monthSelectRekap.value = state.month; $yearSelectRekap.value = state.year;
+                            renderDatabase(); renderDashboard(); render();
+                            alert('Data berhasil diimpor!');
+                        }
+                    } else { alert('Format file JSON tidak valid.'); }
+                } catch (ex) { alert('Gagal membaca file: ' + ex.message); }
+            };
+            reader.readAsText(file); event.target.value = ''; 
+        }
+        $btnExport.addEventListener('click', exportData); $btnImport.addEventListener('click', triggerImport); $importFile.addEventListener('change', handleFileImport);
+
+        // === PRINT ===
+        $btnPrint.addEventListener('click', () => {
+            const periodText = `PERIODE : ${MONTHS[state.month]} ${state.year}`;
+            const stats = calculateMonthStats(state.year, state.month); 
+            const monthData = getMonthData(); 
+            const totalDaysInMonth = getDaysInMonth(state.month, state.year);
+            
+            const rows = [];
+            let grandTotals = { days: 0, bruto: 0, pph: 0, netto: 0 };
+
+            monthData.staff.forEach((emp, idx) => {
+                const gol = emp.gol || '-'; 
+                const rate = RATES[gol] || 0; const taxRate = TAX_RATES[gol] || 0; let daysCount = 0; 
+                
+                for (let d = 1; d <= totalDaysInMonth; d++) { 
+                    if (isWeekend(d, state.month, state.year)) continue; 
+                    const dateKey = formatDateKey(d, state.month, state.year); if (HOLIDAYS[dateKey]) continue; 
+                    if (isCustomHoliday(d, state.year, state.month)) continue; 
+                    const entry = emp.schedule[d]; const status = (typeof entry === 'object') ? entry.status : entry; 
+                    if (['Perjadin', 'Cuti', 'Hari Libur'].includes(status)) continue; 
+                    daysCount++; 
+                }
+                
+                const bruto = daysCount * rate; const pph = Math.round(bruto * taxRate); const netto = bruto - pph;
+                
+                grandTotals.days += daysCount; grandTotals.bruto += bruto; grandTotals.pph += pph; grandTotals.netto += netto;
+                
+                rows.push({ idx: idx + 1, nama: emp.nama, days: daysCount, bruto, pph, netto });
+            });
+
+            const ROWS_PER_PAGE = 24; 
+            const totalRows = rows.length;
+            let printHTML = '';
+            
+            for (let i = 0; i < totalRows; i += ROWS_PER_PAGE) {
+                const pageRows = rows.slice(i, i + ROWS_PER_PAGE);
+                const isLastPage = (i + ROWS_PER_PAGE) >= totalRows;
+                
+                let subTotals = { days: 0, bruto: 0, pph: 0, netto: 0 };
+                pageRows.forEach(r => {
+                    subTotals.days += r.days; subTotals.bruto += r.bruto; subTotals.pph += r.pph; subTotals.netto += r.netto;
+                });
+
+                printHTML += `<div class="print-page-block">`;
+                printHTML += `<div class="print-header-area"><h1 style="font-size: 14pt; font-weight: bold; margin: 0;">PERHITUNGAN UANG MAKAN</h1><h2 style="font-size: 12pt; margin-top: 5px;">${periodText}</h2></div>`;
+                printHTML += `<table class="print-table"><thead><tr><th>No</th><th>Nama Pegawai</th><th><div>Jumlah Bruto</div><div style="font-size: 9pt; font-weight: normal;">(Rp.)</div></th><th><div>Potongan PPh 21</div><div style="font-size: 9pt; font-weight: normal;">(Rp.)</div></th><th><div>Jumlah Diterima</div><div style="font-size: 9pt; font-weight: normal;">(Rp.)</div></th></tr></thead><tbody>`;
+                
+                pageRows.forEach(r => {
+                    printHTML += `<tr><td>${r.idx}</td><td>${r.nama}</td><td>${formatCurrency(r.bruto)}</td><td>${formatCurrency(r.pph)}</td><td>${formatCurrency(r.netto)}</td></tr>`;
+                });
+
+                printHTML += `</tbody>`;
+                printHTML += `<tfoot>`;
+                printHTML += `<tr style="border-top: 1px solid black; font-weight: bold; background-color: #f9f9f9;"><td colspan="2" style="text-align: right;">Sub Total</td><td>${formatCurrency(subTotals.bruto)}</td><td>${formatCurrency(subTotals.pph)}</td><td>${formatCurrency(subTotals.netto)}</td></tr>`;
+                
+                if (isLastPage) {
+                     printHTML += `<tr style="border-top: 2px solid black; font-weight: bold; background-color: #f0f0f0;"><td colspan="2" style="text-align: right;">Total Keseluruhan</td><td>${formatCurrency(grandTotals.bruto)}</td><td>${formatCurrency(grandTotals.pph)}</td><td>${formatCurrency(grandTotals.netto)}</td></tr>`;
+                }
+                
+                printHTML += `</tfoot></table>`;
+                printHTML += `</div>`;
+            }
+
+            document.getElementById('printArea').innerHTML = printHTML;
+            window.print();
+        });
+
+        // === CALCULATION LOGIC ===
+        const getDaysInMonth = (m, y) => new Date(y, m + 1, 0).getDate();
+        const getDayOfWeek = (d, m, y) => new Date(y, m, d).getDay();
+        const isWeekend = (d, m, y) => { const day = getDayOfWeek(d,m,y); return day === 0 || day === 6; };
+        const formatDateKey = (d, m, y) => `${y}-${String(m+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+        const getMonthKey = (y, m) => `${y}-${m}`;
+
+        function isCustomHoliday(day, y, m) {
+            const monthData = getMonthData(y, m);
+            return monthData.customHolidays && monthData.customHolidays.includes(day);
+        }
+
+        function calculateMonthStats(year, month) {
+            const monthData = getMonthData(year, month); 
+            const totalDaysInMonth = getDaysInMonth(month, year);
+            let monthTotalDays = 0; let monthTotalBruto = 0; let monthTotalPph = 0; let monthTotalNetto = 0;
+            
+            monthData.staff.forEach((emp) => {
+                const gol = emp.gol || '-'; 
+                const rate = RATES[gol] || 0; const taxRate = TAX_RATES[gol] || 0;
+                let daysCount = 0; 
+                for (let d = 1; d <= totalDaysInMonth; d++) {
+                    if (isWeekend(d, month, year)) continue; const dateKey = formatDateKey(d, month, year); if (HOLIDAYS[dateKey]) continue;
+                    if (isCustomHoliday(d, year, month)) continue; 
+                    const entry = emp.schedule[d]; const status = (typeof entry === 'object') ? entry.status : entry;
+                    if (['Perjadin', 'Cuti', 'Hari Libur'].includes(status)) continue;
+                    daysCount++;
+                }
+                const bruto = daysCount * rate; const pph = Math.round(bruto * taxRate); const netto = bruto - pph;
+                monthTotalDays += daysCount; monthTotalBruto += bruto; monthTotalPph += pph; monthTotalNetto += netto;
+            });
+            return { days: monthTotalDays, bruto: monthTotalBruto, pph: monthTotalPph, netto: monthTotalNetto };
+        }
+
+        function renderDashboard() {
+            document.getElementById('dash-year-label').textContent = state.year;
+            const activeEmployees = state.employees.filter(e => e.status === 'active');
+            document.getElementById('dash-total-emp').textContent = activeEmployees.length;
+            
+            let yearStats = { days: 0, bruto: 0, pph: 0, netto: 0 }; let tableRows = '';
+            
+            for (let m = 0; m < 12; m++) {
+                const mStats = calculateMonthStats(state.year, m);
+                yearStats.days += mStats.days; yearStats.bruto += mStats.bruto; yearStats.pph += mStats.pph; yearStats.netto += mStats.netto;
+                tableRows += `<tr><td>${MONTHS[m]}</td><td>${formatCurrency(mStats.bruto)}</td><td>${formatCurrency(mStats.pph)}</td></tr>`;
+            }
+            
+            document.getElementById('dash-total-days').textContent = yearStats.days;
+            document.getElementById('dash-total-bruto').textContent = formatCurrency(yearStats.bruto);
+            document.getElementById('dash-total-pph').textContent = formatCurrency(yearStats.pph);
+            document.getElementById('dashTableBody').innerHTML = tableRows;
+            document.getElementById('dashFootBruto').textContent = formatCurrency(yearStats.bruto);
+            document.getElementById('dashFootPph').textContent = formatCurrency(yearStats.pph);
+
+            // Render Daily Activity
+            renderDailyActivity();
+        }
+
+        // === DAILY ACTIVITY LOGIC ===
+        function initDashboardFilter() {
+            const today = new Date();
+            const yyyy = today.getFullYear();
+            const mm = String(today.getMonth() + 1).padStart(2, '0');
+            const dd = String(today.getDate()).padStart(2, '0');
+            document.getElementById('dashDateFilter').value = `${yyyy}-${mm}-${dd}`;
+            document.getElementById('dashDateFilter').addEventListener('change', renderDailyActivity);
+        }
+
+        function resetDashDate() {
+            initDashboardFilter();
+            renderDailyActivity();
+        }
+        window.resetDashDate = resetDashDate;
+
+        function renderDailyActivity() {
+            const dateVal = document.getElementById('dashDateFilter').value;
+            if (!dateVal) return;
+
+            const [year, monthStr, dayStr] = dateVal.split('-');
+            const month = parseInt(monthStr) - 1;
+            const day = parseInt(dayStr);
+            
+            const monthKey = `${year}-${month}`;
+            const monthData = state.scheduleData[monthKey];
+            
+            const listContainer = document.getElementById('dailyActivityList');
+            
+            if (!monthData || !monthData.staff || monthData.staff.length === 0) {
+                listContainer.innerHTML = '<p class="text-gray-400 text-sm italic text-center py-10">Tidak ada data jadwal untuk periode ini.</p>';
+                return;
+            }
+
+            const results = {
+                'Perjadin': [],
+                'Translok': [],
+                'Cuti': [],
+                'Breefing': [],
+                'Daring': []
+            };
+
+            monthData.staff.forEach(emp => {
+                const entry = emp.schedule[day];
+                const status = (typeof entry === 'object') ? entry.status : entry;
+                if (status && results[status]) {
+                    results[status].push(emp.nama);
+                }
+            });
+
+            let html = '';
+            let foundAny = false;
+
+            const statusColors = {
+                'Perjadin': { bg: 'bg-blue-50', text: 'text-blue-700', border: 'border-blue-200' },
+                'Translok': { bg: 'bg-amber-50', text: 'text-amber-700', border: 'border-amber-200' },
+                'Cuti': { bg: 'bg-green-50', text: 'text-green-700', border: 'border-green-200' },
+                'Breefing': { bg: 'bg-cyan-50', text: 'text-cyan-700', border: 'border-cyan-200' },
+                'Daring': { bg: 'bg-red-50', text: 'text-red-700', border: 'border-red-200' }
+            };
+
+            for (const [status, names] of Object.entries(results)) {
+                if (names.length > 0) {
+                    foundAny = true;
+                    const colors = statusColors[status];
+                    html += `
+                        <div class="border ${colors.border} ${colors.bg} rounded-lg p-3">
+                            <div class="flex items-center justify-between mb-2 border-b ${colors.border} pb-1">
+                                <h4 class="font-bold ${colors.text} text-sm">${status}</h4>
+                                <span class="text-xs font-semibold ${colors.text} bg-white px-2 py-0.5 rounded-full shadow-sm">${names.length} orang</span>
+                            </div>
+                            <ul class="grid grid-cols-1 md:grid-cols-2 gap-1 text-xs text-gray-700">
+                                ${names.map(n => `<li class="truncate">${n}</li>`).join('')}
+                            </ul>
+                        </div>
+                    `;
+                }
+            }
+
+            if (!foundAny) {
+                html = '<p class="text-gray-400 text-sm italic text-center py-10">Tidak ada kegiatan khusus pada tanggal ini.</p>';
+            }
+
+            listContainer.innerHTML = html;
+        }
+
+        function toggleCustomHoliday(day) {
+            const monthData = getMonthData();
+            if (!monthData.customHolidays) monthData.customHolidays = [];
+            const index = monthData.customHolidays.indexOf(day);
+            if (index > -1) { monthData.customHolidays.splice(index, 1); } else { monthData.customHolidays.push(day); }
+            saveState(); render(); renderReport(); renderDashboard();
+        }
+        window.toggleCustomHoliday = toggleCustomHoliday;
+
+        function changeReportPeriod(delta) {
+            state.month += delta;
+            if (state.month > 11) { state.month = 0; state.year++; }
+            if (state.month < 0) { state.month = 11; state.year--; }
+            renderReport(); saveState();
+        }
+        window.changeReportPeriod = changeReportPeriod;
+
+        function render() {
+            const days = getDaysInMonth(state.month, state.year);
+            const monthData = getMonthData();
+            
+            $periodDisplay.textContent = `${MONTHS[state.month]} ${state.year}`;
+            
+            let headerHTML = `<tr>
+                <th class="sticky-col sticky-col-1 px-3 py-3 text-xs font-bold uppercase tracking-wider">No</th>
+                <th class="sticky-col sticky-col-2 px-3 py-3 text-xs font-bold uppercase tracking-wider">Nama Pegawai</th>
+                <th class="sticky-col sticky-col-3 px-3 py-3 text-xs font-bold uppercase tracking-wider">Gol</th>
+                <th class="sticky-col sticky-col-4 px-3 py-3 text-xs font-bold uppercase tracking-wider">Aksi</th>`;
+            
+            const today = new Date();
+            for (let d = 1; d <= days; d++) {
+                const dayOfWeek = getDayOfWeek(d, state.month, state.year); const dateKey = formatDateKey(d, state.month, state.year); const holidayName = HOLIDAYS[dateKey]; const weekend = isWeekend(d, state.month, state.year); const isToday = d === today.getDate() && state.month === today.getMonth() && state.year === today.getFullYear();
+                const isCustom = isCustomHoliday(d, state.year, state.month);
+                let headerClass = 'date-col';
+                if (weekend) headerClass += ' weekend-header';
+                else if (isCustom) headerClass += ' custom-holiday-header';
+                
+                headerHTML += `<th class="${headerClass}" onclick="toggleCustomHoliday(${d})"><div class="text-xs opacity-80 font-medium relative holiday-header">${holidayName ? `<span class="holiday-name">${holidayName}</span>` : ''} ${DAYS[dayOfWeek]}</div><div class="text-sm font-bold ${isToday ? 'ring-2 ring-white rounded-md px-1' : ''} ${holidayName ? 'text-yellow-200' : ''}">${d}</div></th>`;
+            }
+            headerHTML += '</tr>'; $thead.innerHTML = headerHTML;
+            
+            let bodyHTML = '';
+            monthData.staff.forEach((emp, idx) => {
+                bodyHTML += `<tr>
+                    <td class="sticky-col sticky-col-1 px-3 py-1 text-sm text-gray-500 font-medium">${idx + 1}</td>
+                    <td class="sticky-col sticky-col-2 px-3 py-1 text-sm text-gray-800 font-medium whitespace-nowrap">${emp.nama}</td>`;
+                
+                const golVal = emp.gol || '';
+                const golClass = golVal ? 'gol-text' : 'gol-text empty';
+                bodyHTML += `<td class="sticky-col sticky-col-3"><div class="${golClass}" data-emp="${idx}" data-type="gol" tabindex="0" style="height: 50px; display: flex;"><span class="edit-hint">Klik ubah</span>${golVal || '-'}</div></td>`;
+                
+                bodyHTML += `<td class="sticky-col sticky-col-4">
+                    <div style="height: 50px; display: flex; align-items: center; justify-content: center; gap: 2px; flex-direction: column;">
+                        <button onclick="editEmployeeSchedule(${idx})" class="action-btn action-btn-edit w-full">Edit</button>
+                        <button onclick="deleteEmployeeSchedule(${idx})" class="action-btn action-btn-delete w-full">Hapus</button>
+                    </div>
+                </td>`;
+
+                for (let d = 1; d <= days; d++) {
+                    const weekend = isWeekend(d, state.month, state.year);
+                    const isCustom = isCustomHoliday(d, state.year, state.month);
+                    const tdClass = (weekend ? 'weekend-col' : '') + (isCustom ? ' custom-holiday-col' : '');
+                    const rawVal = (emp.schedule && emp.schedule[d]) ? emp.schedule[d] : '';
+                    const status = (typeof rawVal === 'object') ? rawVal.status : rawVal; const note = (typeof rawVal === 'object') ? rawVal.note : '';
+                    const statusClass = status ? `status-${status.replace(/\s+/g, '-')}` : 'empty';
+                    bodyHTML += `<td class="${tdClass}"><div class="cell-wrapper"><div class="cell-status ${statusClass}" data-emp="${idx}" data-day="${d}" data-type="status" tabindex="0">${status || ''}</div><textarea class="cell-note-input" data-emp="${idx}" data-day="${d}" placeholder="Ketik..." spellcheck="false" aria-label="Catatan">${note}</textarea></div></td>`;
+                } 
+                bodyHTML += '</tr>';
+            }); 
+            $tbody.innerHTML = bodyHTML;
+            document.querySelectorAll('.cell-note-input').forEach(input => { input.addEventListener('change', handleNoteChange); input.addEventListener('input', autoResize); input.addEventListener('keydown', handleKeyDown); });
+        }
+
+        function renderRekap() {
+            const monthData = getMonthData(); const totalDaysInMonth = getDaysInMonth(state.month, state.year);
+            $rekapPeriod.textContent = `PERIODE : ${MONTHS[state.month]} ${state.year}`;
+            let bodyHTML = '';
+            monthData.staff.forEach((emp, idx) => {
+                let counts = { 'Perjadin': 0, 'Translok': 0, 'Cuti': 0, 'Breefing': 0, 'Daring': 0 };
+                for (let d = 1; d <= totalDaysInMonth; d++) {
+                    if (isWeekend(d, state.month, state.year)) continue; const dateKey = formatDateKey(d, state.month, state.year); if (HOLIDAYS[dateKey]) continue;
+                    if (isCustomHoliday(d, state.year, state.month)) continue;
+                    const entry = emp.schedule[d]; const status = (typeof entry === 'object') ? entry.status : entry; if (STATUS_TYPES.includes(status)) counts[status]++;
+                }
+                bodyHTML += `<tr class="hover:bg-gray-50">
+                    <td class="px-4 py-2 border">${idx + 1}</td>
+                    <td class="px-4 py-2 border sticky left-0 bg-white">${emp.nama}</td>
+                    <td class="px-4 py-2 border font-semibold text-blue-700">${counts['Perjadin']}</td>
+                    <td class="px-4 py-2 border font-semibold text-amber-700">${counts['Translok']}</td>
+                    <td class="px-4 py-2 border font-semibold text-green-700">${counts['Cuti']}</td>
+                    <td class="px-4 py-2 border font-semibold text-cyan-700">${counts['Breefing']}</td>
+                    <td class="px-4 py-2 border font-semibold text-red-700">${counts['Daring']}</td>
+                </tr>`;
+            });
+            $rekapBody.innerHTML = bodyHTML;
+        }
+
+        function renderReport() {
+            const stats = calculateMonthStats(state.year, state.month); 
+            const monthData = getMonthData(); 
+            const totalDaysInMonth = getDaysInMonth(state.month, state.year);
+            $reportPeriod.textContent = `Periode : ${MONTHS[state.month]} ${state.year}`; let bodyHTML = '';
+            monthData.staff.forEach((emp, idx) => {
+                const gol = emp.gol || '-';
+                const rate = RATES[gol] || 0; const taxRate = TAX_RATES[gol] || 0; let daysCount = 0;
+                for (let d = 1; d <= totalDaysInMonth; d++) { 
+                    if (isWeekend(d, state.month, state.year)) continue; const dateKey = formatDateKey(d, state.month, state.year); if (HOLIDAYS[dateKey]) continue; if (isCustomHoliday(d, state.year, state.month)) continue; 
+                    const entry = emp.schedule[d]; const status = (typeof entry === 'object') ? entry.status : entry; 
+                    if (['Perjadin', 'Cuti', 'Hari Libur'].includes(status)) continue; 
+                    daysCount++; 
+                }
+                const bruto = daysCount * rate; const pph = Math.round(bruto * taxRate); const netto = bruto - pph;
+                bodyHTML += `<tr class="hover:bg-gray-50"><td class="px-3 py-1 border">${idx + 1}</td><td class="px-3 py-1 border sticky left-0 bg-white">${emp.nama}</td><td class="px-3 py-1 border text-center font-bold">${gol}</td><td class="px-3 py-1 border text-center font-bold">${daysCount}</td><td class="px-3 py-1 border font-semibold text-green-700 text-right">${formatCurrency(bruto)}</td><td class="px-3 py-1 border text-red-600 text-right">${formatCurrency(pph)}</td><td class="px-3 py-1 border font-bold text-blue-700 text-right">${formatCurrency(netto)}</td></tr>`;
+            });
+            $reportBody.innerHTML = bodyHTML;
+            document.getElementById('totalDays').textContent = stats.days; document.getElementById('totalBruto').textContent = formatCurrency(stats.bruto); document.getElementById('totalPph').textContent = formatCurrency(stats.pph); document.getElementById('totalNetto').textContent = formatCurrency(stats.netto);
+        }
+
+        function autoResize(e) { const el = e.target; el.style.height = 'auto'; el.style.height = (el.scrollHeight) + 'px'; }
+        function handleKeyDown(e) {
+            const key = e.key;
+            if (["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight", "Enter"].includes(key)) {
+                e.preventDefault(); const currentInput = e.target; const currentTd = currentInput.closest('td'); const currentTr = currentTd.parentElement; const cellIndex = Array.from(currentTr.children).indexOf(currentTd); let targetTd = null;
+                if (key === "ArrowDown" || key === "Enter") { const nextTr = currentTr.nextElementSibling; if (nextTr) targetTd = nextTr.children[cellIndex]; }
+                else if (key === "ArrowUp") { const prevTr = currentTr.previousElementSibling; if (prevTr) targetTd = prevTr.children[cellIndex]; }
+                else if (key === "ArrowRight") { targetTd = currentTd.nextElementSibling; }
+                else if (key === "ArrowLeft") { targetTd = currentTd.previousElementSibling; }
+                if (targetTd && !targetTd.classList.contains('sticky-col')) { const targetInput = targetTd.querySelector('.cell-note-input'); if (targetInput) { targetInput.focus(); targetInput.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'nearest' }); } }
+            }
+        }
+        function handleNoteChange(e) {
+            const empIdx = e.target.dataset.emp; const day = e.target.dataset.day; const noteText = e.target.value;
+            const monthData = getMonthData();
+            const emp = monthData.staff[empIdx];
+            if(!emp.schedule) emp.schedule = {};
+            const currentEntry = emp.schedule[day] || {}; 
+            emp.schedule[day] = { status: currentEntry.status || '', note: noteText }; 
+            saveState();
+            renderDashboard();
+        }
+        
+        function formatCurrency(num) { return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, "."); }
+
+        function updateDropdownPosition() { 
+            if (!activeCell) return; 
+            const rect = activeCell.getBoundingClientRect(); 
+            const dropdown = activeDropdownType === 'gol' ? $dropdownGol : $dropdownStatus; 
+            
+            dropdown.style.visibility = 'hidden'; 
+            dropdown.style.display = 'block'; 
+            const menuHeight = dropdown.offsetHeight; 
+            const menuWidth = dropdown.offsetWidth; 
+            dropdown.style.visibility = ''; 
+            dropdown.style.display = ''; 
+
+            const buffer = 2; 
+            const viewHeight = window.innerHeight;
+            const viewWidth = window.innerWidth;
+
+            let topPos = rect.bottom + buffer;
+            const fitsBelow = (rect.bottom + menuHeight + buffer) <= viewHeight;
+            const fitsAbove = (rect.top >= menuHeight + buffer);
+
+            if (!fitsBelow && fitsAbove) { topPos = rect.top - menuHeight - buffer; } 
+            else if (!fitsBelow && !fitsAbove) { topPos = buffer; }
+
+            let leftPos = rect.left + (rect.width / 2) - (menuWidth / 2);
+            if (leftPos < buffer) leftPos = buffer;
+            if (leftPos + menuWidth > viewWidth - buffer) leftPos = viewWidth - menuWidth - buffer;
+
+            dropdown.style.top = `${topPos}px`; 
+            dropdown.style.left = `${leftPos}px`; 
+        }
+        
+        function showDropdown(cell) { 
+            hideDropdown(); 
+            activeCell = cell; 
+            activeDropdownType = cell.dataset.type; 
+            updateDropdownPosition(); 
+            const dropdown = activeDropdownType === 'gol' ? $dropdownGol : $dropdownStatus; 
+            dropdown.classList.add('show'); 
+            cell.style.outline = '1px solid var(--primary)'; 
+            cell.style.outlineOffset = '-1px'; 
+        }
+        function hideDropdown() { $dropdownStatus.classList.remove('show'); $dropdownGol.classList.remove('show'); if (activeCell) { activeCell.style.outline = 'none'; activeCell = null; } }
+        
+        function selectValue(val) {
+            if (!activeCell || !activeDropdownType) return; 
+            const empIdx = activeCell.dataset.emp;
+            const monthData = getMonthData();
+
+            if (activeDropdownType === 'gol') { 
+                if (val === '') delete monthData.staff[empIdx].gol; else monthData.staff[empIdx].gol = val;
+            }
+            else {
+                const day = activeCell.dataset.day; 
+                const emp = monthData.staff[empIdx];
+                if(!emp.schedule) emp.schedule = {};
+                const existingEntry = emp.schedule[day] || {}; const existingNote = existingEntry.note || '';
+                if (val === '') emp.schedule[day] = { status: '', note: existingNote }; else emp.schedule[day] = { status: val, note: existingNote };
+            }
+            hideDropdown(); render(); renderReport(); renderDashboard(); saveState();
+        }
+
+        // === EVENT LISTENERS ===
+        $tbody.addEventListener('click', (e) => { const cell = e.target.closest('.cell-status, .gol-text'); if (cell) { if (activeCell === cell) hideDropdown(); else showDropdown(cell); } });
+        $dropdownStatus.addEventListener('click', (e) => { const item = e.target.closest('.dropdown-item'); if (item) selectValue(item.dataset.val); });
+        $dropdownGol.addEventListener('click', (e) => { const item = e.target.closest('.dropdown-item'); if (item) selectValue(item.dataset.val); });
+        document.addEventListener('click', (e) => { if (!e.target.closest('.cell-status') && !e.target.closest('.gol-text') && !e.target.closest('.dropdown-menu')) hideDropdown(); });
+        document.addEventListener('keydown', (e) => { if (e.key === 'Escape') { hideDropdown(); closeModal(); } });
+        if($tableWrapper) { $tableWrapper.addEventListener('scroll', () => { if (activeCell) updateDropdownPosition(); }); }
+        document.getElementById('menuToggle').addEventListener('click', () => { document.getElementById('mobileNav').classList.toggle('hidden'); });
+        function createParticles() { const c = document.getElementById('bg-particles'); for (let i = 0; i < 6; i++) { const p = document.createElement('div'); p.className = 'bg-particle'; p.style.cssText = `width: ${Math.random()*200+100}px; height: ${Math.random()*200+100}px; left: ${Math.random()*100}%; top: ${Math.random()*100}%;`; c.appendChild(p); } }
+
+        // === INIT ===
+        if (!window.matchMedia('(prefers-reduced-motion: reduce)').matches) createParticles();
+        initSelectors(); initTabs(); initDashboardFilter(); renderDashboard();
+    </script>
+</body>
+</html>
