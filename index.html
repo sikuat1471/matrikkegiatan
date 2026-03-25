@@ -553,13 +553,13 @@
     <div id="dropdown-gol" class="dropdown-menu no-print">
         <div class="dropdown-item" data-val="II"><span>Gol II</span></div>
         <div class="dropdown-item" data-val="III"><span>Gol III</span></div>
-        <div class="dropdown-item" data-val="III"><span>Gol III/a</span></div>
-        <div class="dropdown-item" data-val="III"><span>Gol III/b</span></div>
-        <div class="dropdown-item" data-val="III"><span>Gol III/c</span></div>
-        <div class="dropdown-item" data-val="III"><span>Gol III/d</span></div>
-        <div class="dropdown-item" data-val="IV"><span>Gol IV/a</span></div>
-        <div class="dropdown-item" data-val="IV"><span>Gol IV/b</span></div>
-        <div class="dropdown-item" data-val="IV"><span>Gol IV/c</span></div>
+        <div class="dropdown-item" data-val="III/a"><span>Gol III/a</span></div>
+        <div class="dropdown-item" data-val="III/b"><span>Gol III/b</span></div>
+        <div class="dropdown-item" data-val="III/c"><span>Gol III/c</span></div>
+        <div class="dropdown-item" data-val="III/d"><span>Gol III/d</span></div>
+        <div class="dropdown-item" data-val="IV/a"><span>Gol IV/a</span></div>
+        <div class="dropdown-item" data-val="IV/b"><span>Gol IV/b</span></div>
+        <div class="dropdown-item" data-val="IV/c"><span>Gol IV/c</span></div>
         <div class="border-t border-gray-100 mt-1 pt-1"><div class="dropdown-item text-gray-500" data-val=""><span>Hapus</span></div></div>
     </div>
 
@@ -614,8 +614,8 @@
         const MONTHS = ["Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember"];
         const DAYS = ["Min", "Sen", "Sel", "Rab", "Kam", "Jum", "Sab"];
         const HOLIDAYS = { '2025-01-01': 'Tahun Baru', '2025-01-29': 'Imlek', '2025-03-29': 'Nyepi', '2025-03-31': 'Idul Fitri', '2025-04-01': 'Idul Fitri', '2025-04-18': 'Wafat Isa Almasih', '2025-05-01': 'Hari Buruh', '2025-05-12': 'Waisak', '2025-05-29': 'Kenaikan Isa Almasih', '2025-06-01': 'Hari Lahir Pancasila', '2025-06-06': 'Idul Adha', '2025-06-27': 'Tahun Baru Islam', '2025-08-17': 'Hari Kemerdekaan', '2025-09-05': 'Maulid Nabi', '2025-12-25': 'Hari Natal' };
-        const RATES = { 'II': 35000, 'III,III/a,III/b,III/c,III/d': 37000, 'IV/a,IV/b,IV/c': 41000 };
-        const TAX_RATES = { 'II': 0, 'III,III/a,III/b,III/c,III/d': 0.05, 'IV/a,IV/b,IV/c': 0.15 };
+        const RATES = { 'II': 35000, 'III': 37000, 'III/a': 37000, 'III/b': 37000, 'III/cv': 37000,'III/d': 37000, 'IV/a': 41000, 'IV/b': 41000, 'IV/c': 41000 };
+        const TAX_RATES = { 'II': 0, 'III': 0.05, 'III/a': 0.05, 'III/b': 0.05, 'III/c': 0.05, 'III/d': 0.05, 'IV/a': 0.15, 'IV/b': 0.15, 'IV/c': 0.15 };
         const STATUS_TYPES = ['Perjadin', 'Translok', 'Cuti', 'Breefing', 'Daring']; 
 
         // === STATE MANAGEMENT ===
