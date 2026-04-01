@@ -52,11 +52,10 @@
         /* Sticky Columns Adjustments */
         .sticky-col-1 { left: 0; width: 50px; min-width: 50px; }
         .sticky-col-2 { left: 50px; width: 260px; min-width: 260px; }
-        .sticky-col-3 { left: 310px; width: 60px; min-width: 60px; }
-        .sticky-col-4 { left: 370px; width: 100px; min-width: 100px; border-right: 2px solid rgba(14, 165, 233, 0.2) !important; }
+        .sticky-col-3 { left: 310px; width: 100px; min-width: 100px; border-right: 2px solid rgba(14, 165, 233, 0.2) !important; }
         
         /* Alignment Fixes */
-        .sticky-col-1, .sticky-col-3, .sticky-col-4 { text-align: center; }
+        .sticky-col-1, .sticky-col-3 { text-align: center; }
         thead .sticky-col-2 { text-align: center; }
         tbody .sticky-col-2 { text-align: left; }
 
@@ -210,7 +209,6 @@
             .print-schedule-table thead th { background-color: #e0e0e0 !important; font-weight: bold; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
             .print-schedule-table th.col-no { width: 18px; }
             .print-schedule-table th.col-nama { width: 120px; text-align: left !important; }
-            .print-schedule-table th.col-gol { width: 28px; }
             .print-schedule-table td.col-nama { text-align: left !important; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-size: 6.5pt; }
             .print-schedule-table th.col-day { width: 22px; }
             .print-schedule-table .day-header-sub { font-size: 5pt; font-weight: normal; display: block; line-height: 1; }
@@ -226,8 +224,7 @@
 
         @media (max-width: 768px) {
             .sticky-col-2 { min-width: 180px; left: 40px; }
-            .sticky-col-3 { min-width: 50px; left: 220px; }
-            .sticky-col-4 { min-width: 80px; left: 270px; }
+            .sticky-col-3 { min-width: 80px; left: 220px; }
             .sticky-col-1 { width: 40px; }
             .schedule-table { font-size: 11px; }
             .cell-wrapper { height: 45px; }
@@ -394,9 +391,7 @@
                             <button onclick="resetDashDate()" class="nav-btn whitespace-nowrap text-xs">Hari Ini</button>
                         </div>
                     </div>
-                    <div id="dailyActivityList" class="space-y-2 max-h-[400px] overflow-y-auto pr-2">
-                        <!-- Injected by JS -->
-                    </div>
+                    <div id="dailyActivityList" class="space-y-2 max-h-[400px] overflow-y-auto pr-2"></div>
                 </div>
             </div>
         </div>
@@ -989,7 +984,7 @@
             const monthData = getMonthData();
             const periodText = `PERIODE : ${MONTHS[state.month]} ${state.year}`;
 
-            let theadHTML = '<tr><th class="col-no">No</th><th class="col-nama">Nama Pegawai</th><th class="col-gol">Gol</th>';
+            let theadHTML = '<tr><th class="col-no">No</th><th class="col-nama">Nama Pegawai</th>';
             for (let d = 1; d <= days; d++) {
                 const dayOfWeek = getDayOfWeek(d, state.month, state.year);
                 const dateKey = formatDateKey(d, state.month, state.year);
@@ -1013,7 +1008,7 @@
                 let tbodyHTML = '';
                 pageStaff.forEach((emp, pageIdx) => {
                     const globalIdx = i + pageIdx;
-                    tbodyHTML += `<tr><td>${globalIdx + 1}</td><td class="col-nama">${emp.nama}</td><td>${emp.gol || '-'}</td>`;
+                    tbodyHTML += `<tr><td>${globalIdx + 1}</td><td class="col-nama">${emp.nama}</td>`;
                     for (let d = 1; d <= days; d++) {
                         const weekend = isWeekend(d, state.month, state.year);
                         const isCustom = isCustomHoliday(d, state.year, state.month);
@@ -1283,8 +1278,7 @@
             let headerHTML = `<tr>
                 <th class="sticky-col sticky-col-1 px-3 py-3 text-xs font-bold uppercase tracking-wider">No</th>
                 <th class="sticky-col sticky-col-2 px-3 py-3 text-xs font-bold uppercase tracking-wider">Nama Pegawai</th>
-                <th class="sticky-col sticky-col-3 px-3 py-3 text-xs font-bold uppercase tracking-wider">Gol</th>
-                <th class="sticky-col sticky-col-4 px-3 py-3 text-xs font-bold uppercase tracking-wider">Aksi</th>`;
+                <th class="sticky-col sticky-col-3 px-3 py-3 text-xs font-bold uppercase tracking-wider">Aksi</th>`;
             
             const today = new Date();
             for (let d = 1; d <= days; d++) {
@@ -1305,11 +1299,7 @@
                     <td class="sticky-col sticky-col-1 px-3 py-1 text-sm text-gray-500 font-medium">${idx + 1}</td>
                     <td class="sticky-col sticky-col-2 px-3 py-1 text-sm text-gray-800 font-medium whitespace-nowrap">${emp.nama}</td>`;
                 
-                const golVal = emp.gol || '';
-                const golClass = golVal ? 'gol-text' : 'gol-text empty';
-                bodyHTML += `<td class="sticky-col sticky-col-3"><div class="${golClass}" data-emp="${idx}" data-type="gol" tabindex="0" style="height: 50px; display: flex;"><span class="edit-hint">Klik ubah</span>${golVal || '-'}</div></td>`;
-                
-                bodyHTML += `<td class="sticky-col sticky-col-4">
+                bodyHTML += `<td class="sticky-col sticky-col-3">
                     <div style="height: 50px; display: flex; align-items: center; justify-content: center; gap: 2px; flex-direction: column;">
                         <button onclick="editEmployeeSchedule(${idx})" class="action-btn action-btn-edit w-full">Edit</button>
                         <button onclick="deleteEmployeeSchedule(${idx})" class="action-btn action-btn-delete w-full">Hapus</button>
@@ -1327,7 +1317,7 @@
                 } 
                 bodyHTML += '</tr>';
             }); 
-            $tbody.innerHTML = bodyHTML || '<tr><td colspan="4" class="text-center py-8 text-gray-400 italic" style="position:sticky;left:0;z-index:5;">Tidak ada data ditemukan.</td></tr>';
+            $tbody.innerHTML = bodyHTML || '<tr><td colspan="3" class="text-center py-8 text-gray-400 italic" style="position:sticky;left:0;z-index:5;">Tidak ada data ditemukan.</td></tr>';
             document.querySelectorAll('.cell-note-input').forEach(input => { input.addEventListener('change', handleNoteChange); input.addEventListener('input', autoResize); input.addEventListener('keydown', handleKeyDown); });
         }
 
