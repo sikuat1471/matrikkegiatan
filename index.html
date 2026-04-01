@@ -183,6 +183,7 @@
         .activity-card:hover { border-color: #D1D5DB; background: #F3F4F6; }
         .activity-badge { display: inline-block; padding: 2px 8px; border-radius: 9999px; font-size: 10px; font-weight: 700; text-transform: uppercase; }
         
+        @page schedule-page { size: A4 landscape; margin: 8mm; }
         /* PRINT STYLES */
         @media print {
             .no-print, #bg-particles { display: none !important; }
@@ -203,9 +204,26 @@
             .print-header-area h1 { font-size: 14pt; }
             .print-header-area h2 { font-size: 12pt; }
             .nav-btn { display: none !important; }
+            .print-schedule-content { page: schedule-page; }
+            .print-schedule-table { width: 100%; border-collapse: collapse; font-size: 7pt; table-layout: fixed; }
+            .print-schedule-table th, .print-schedule-table td { border: 1px solid black; padding: 1px 2px; text-align: center; vertical-align: middle; overflow: hidden; }
+            .print-schedule-table thead th { background-color: #e0e0e0 !important; font-weight: bold; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+            .print-schedule-table th.col-no { width: 18px; }
+            .print-schedule-table th.col-nama { width: 120px; text-align: left !important; }
+            .print-schedule-table th.col-gol { width: 28px; }
+            .print-schedule-table td.col-nama { text-align: left !important; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-size: 6.5pt; }
+            .print-schedule-table th.col-day { width: 22px; }
+            .print-schedule-table .day-header-sub { font-size: 5pt; font-weight: normal; display: block; line-height: 1; }
+            .print-schedule-table .sp { color: #1D4ED8; font-weight: bold; }
+            .print-schedule-table .st { color: #B45309; font-weight: bold; }
+            .print-schedule-table .sc { color: #15803D; font-weight: bold; }
+            .print-schedule-table .sb { color: #0E7490; font-weight: bold; }
+            .print-schedule-table .sd { color: #DC2626; font-weight: bold; }
+            .print-schedule-table .note-text { font-size: 4.5pt; color: #555; display: block; line-height: 1.1; max-height: 14px; overflow: hidden; }
+            .print-schedule-table td.weekend-cell, .print-schedule-table th.weekend-cell { background-color: #fee2e2 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
         }
         .print-only { display: none; }
-        
+
         @media (max-width: 768px) {
             .sticky-col-2 { min-width: 180px; left: 40px; }
             .sticky-col-3 { min-width: 50px; left: 220px; }
@@ -399,6 +417,16 @@
                             <span>Tambah</span>
                         </button>
                         <button id="btnToday" class="ctrl-btn px-5 h-11 rounded-xl text-sm w-full md:w-auto">Hari Ini</button>
+                        <button id="btnPrintSchedule" class="ctrl-btn ctrl-btn-blue px-4 h-11 rounded-xl text-sm" title="Cetak Jadwal (Landscape)">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path></svg>
+                            <span>Cetak</span>
+                        </button>
+                    </div>
+                </div>
+                <div class="mt-4">
+                    <div class="relative">
+                        <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+                        <input type="text" id="searchJadwal" placeholder="Cari nama pegawai..." class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-sky-500 focus:border-sky-500">
                     </div>
                 </div>
             </div>
@@ -429,6 +457,12 @@
                     <div class="flex items-center gap-3">
                         <select id="monthSelectRekap" class="custom-select w-40 h-11"></select>
                         <select id="yearSelectRekap" class="custom-select w-28 h-11"></select>
+                    </div>
+                </div>
+                <div class="mt-4">
+                    <div class="relative">
+                        <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+                        <input type="text" id="searchRekap" placeholder="Cari nama pegawai..." class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-sky-500 focus:border-sky-500">
                     </div>
                 </div>
             </div>
@@ -463,6 +497,12 @@
                     <div class="flex items-center gap-3">
                         <button onclick="changeReportPeriod(-1)" class="nav-btn" title="Bulan Sebelumnya">← Prev</button>
                         <button onclick="changeReportPeriod(1)" class="nav-btn" title="Bulan Berikutnya">Next →</button>
+                    </div>
+                </div>
+                <div class="mt-4">
+                    <div class="relative">
+                        <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+                        <input type="text" id="searchLaporan" placeholder="Cari nama pegawai..." class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-sky-500 focus:border-sky-500">
                     </div>
                 </div>
             </div>
@@ -514,6 +554,12 @@
                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path></svg>
                             Tambah Pegawai
                         </button>
+                    </div>
+                </div>
+                <div class="mt-4">
+                    <div class="relative">
+                        <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+                        <input type="text" id="searchDatabase" placeholder="Cari nama, NIP lama, atau NIP baru..." class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-sky-500 focus:border-sky-500">
                     </div>
                 </div>
             </div>
@@ -706,8 +752,10 @@
 
         // === DATABASE FUNCTIONS (MASTER) ===
         function renderDatabase() {
+            const searchTerm = (document.getElementById('searchDatabase')?.value || '').toLowerCase();
             let html = '';
             state.employees.forEach((emp, idx) => {
+                if (searchTerm && !emp.nama.toLowerCase().includes(searchTerm) && !emp.nip_lama.toLowerCase().includes(searchTerm) && !emp.nip_baru.toLowerCase().includes(searchTerm)) return;
                 const statusBadge = emp.status === 'active' ? `<span class="badge badge-active">Aktif</span>` : 
                                     emp.status === 'moved' ? `<span class="badge badge-moved">Pindah</span>` : 
                                     emp.status === 'retired' ? `<span class="badge badge-retired">Pensiun</span>` : '';
@@ -734,7 +782,7 @@
                     <td class="px-4 py-2 border text-center whitespace-nowrap">${actionBtns}</td>
                 </tr>`;
             });
-            $dbBody.innerHTML = html;
+            $dbBody.innerHTML = html || '<tr><td colspan="7" class="px-4 py-8 text-center text-gray-400 italic">Tidak ada data ditemukan.</td></tr>';
         }
 
         window.editEmployeeMaster = function(idx) { openModal(idx, 'database'); };
@@ -935,10 +983,73 @@
         }
         $btnExport.addEventListener('click', exportData); $btnImport.addEventListener('click', triggerImport); $importFile.addEventListener('change', handleFileImport);
 
-        // === PRINT ===
+        // === PRINT JADWAL (24 baris per halaman) ===
+        document.getElementById('btnPrintSchedule').addEventListener('click', () => {
+            const days = getDaysInMonth(state.month, state.year);
+            const monthData = getMonthData();
+            const periodText = `PERIODE : ${MONTHS[state.month]} ${state.year}`;
+
+            let theadHTML = '<tr><th class="col-no">No</th><th class="col-nama">Nama Pegawai</th><th class="col-gol">Gol</th>';
+            for (let d = 1; d <= days; d++) {
+                const dayOfWeek = getDayOfWeek(d, state.month, state.year);
+                const dateKey = formatDateKey(d, state.month, state.year);
+                const holidayName = HOLIDAYS[dateKey];
+                const weekend = isWeekend(d, state.month, state.year);
+                const isCustom = isCustomHoliday(d, state.year, state.month);
+                let cls = 'col-day';
+                if (weekend || isCustom) cls += ' weekend-cell';
+                const holidayHint = holidayName ? ` title="${holidayName}"` : '';
+                theadHTML += `<th class="${cls}"${holidayHint}><span class="day-header-sub">${DAYS[dayOfWeek]}</span>${d}</th>`;
+            }
+            theadHTML += '</tr>';
+
+            const allStaff = monthData.staff;
+            const ROWS_PER_PAGE = 24;
+            let printHTML = '';
+
+            for (let i = 0; i < allStaff.length; i += ROWS_PER_PAGE) {
+                const pageStaff = allStaff.slice(i, i + ROWS_PER_PAGE);
+
+                let tbodyHTML = '';
+                pageStaff.forEach((emp, pageIdx) => {
+                    const globalIdx = i + pageIdx;
+                    tbodyHTML += `<tr><td>${globalIdx + 1}</td><td class="col-nama">${emp.nama}</td><td>${emp.gol || '-'}</td>`;
+                    for (let d = 1; d <= days; d++) {
+                        const weekend = isWeekend(d, state.month, state.year);
+                        const isCustom = isCustomHoliday(d, state.year, state.month);
+                        let cls = '';
+                        if (weekend || isCustom) cls = ' class="weekend-cell"';
+
+                        const rawVal = (emp.schedule && emp.schedule[d]) ? emp.schedule[d] : '';
+                        const status = (typeof rawVal === 'object') ? rawVal.status : rawVal;
+                        const note = (typeof rawVal === 'object') ? (rawVal.note || '') : '';
+
+                        let cellContent = '';
+                        if (status) {
+                            const abbr = status.charAt(0);
+                            const abbrLower = abbr.toLowerCase();
+                            cellContent = `<span class="s${abbrLower}">${abbr}</span>`;
+                            if (note) cellContent += `<span class="note-text">${note}</span>`;
+                        }
+
+                        tbodyHTML += `<td${cls}>${cellContent}</td>`;
+                    }
+                    tbodyHTML += '</tr>';
+                });
+
+                printHTML += `<div class="print-page-block print-schedule-content">`;
+                printHTML += `<div class="print-header-area"><h1 style="font-size:14pt;font-weight:bold;margin:0;">MATRIK KERJA PEGAWAI</h1><h2 style="font-size:12pt;margin-top:5px;">${periodText}</h2></div>`;
+                printHTML += `<table class="print-schedule-table"><thead>${theadHTML}</thead><tbody>${tbodyHTML}</tbody></table>`;
+                printHTML += `</div>`;
+            }
+
+            document.getElementById('printArea').innerHTML = printHTML;
+            window.print();
+        });
+
+        // === PRINT LAPORAN ===
         $btnPrint.addEventListener('click', () => {
             const periodText = `PERIODE : ${MONTHS[state.month]} ${state.year}`;
-            const stats = calculateMonthStats(state.year, state.month); 
             const monthData = getMonthData(); 
             const totalDaysInMonth = getDaysInMonth(state.month, state.year);
             
@@ -1056,7 +1167,6 @@
             document.getElementById('dashFootBruto').textContent = formatCurrency(yearStats.bruto);
             document.getElementById('dashFootPph').textContent = formatCurrency(yearStats.pph);
 
-            // Render Daily Activity
             renderDailyActivity();
         }
 
@@ -1166,6 +1276,7 @@
         function render() {
             const days = getDaysInMonth(state.month, state.year);
             const monthData = getMonthData();
+            const searchTerm = (document.getElementById('searchJadwal')?.value || '').toLowerCase();
             
             $periodDisplay.textContent = `${MONTHS[state.month]} ${state.year}`;
             
@@ -1189,6 +1300,7 @@
             
             let bodyHTML = '';
             monthData.staff.forEach((emp, idx) => {
+                if (searchTerm && !emp.nama.toLowerCase().includes(searchTerm)) return;
                 bodyHTML += `<tr>
                     <td class="sticky-col sticky-col-1 px-3 py-1 text-sm text-gray-500 font-medium">${idx + 1}</td>
                     <td class="sticky-col sticky-col-2 px-3 py-1 text-sm text-gray-800 font-medium whitespace-nowrap">${emp.nama}</td>`;
@@ -1215,15 +1327,17 @@
                 } 
                 bodyHTML += '</tr>';
             }); 
-            $tbody.innerHTML = bodyHTML;
+            $tbody.innerHTML = bodyHTML || '<tr><td colspan="4" class="text-center py-8 text-gray-400 italic" style="position:sticky;left:0;z-index:5;">Tidak ada data ditemukan.</td></tr>';
             document.querySelectorAll('.cell-note-input').forEach(input => { input.addEventListener('change', handleNoteChange); input.addEventListener('input', autoResize); input.addEventListener('keydown', handleKeyDown); });
         }
 
         function renderRekap() {
             const monthData = getMonthData(); const totalDaysInMonth = getDaysInMonth(state.month, state.year);
+            const searchTerm = (document.getElementById('searchRekap')?.value || '').toLowerCase();
             $rekapPeriod.textContent = `PERIODE : ${MONTHS[state.month]} ${state.year}`;
             let bodyHTML = '';
             monthData.staff.forEach((emp, idx) => {
+                if (searchTerm && !emp.nama.toLowerCase().includes(searchTerm)) return;
                 let counts = { 'Perjadin': 0, 'Translok': 0, 'Cuti': 0, 'Breefing': 0, 'Daring': 0 };
                 for (let d = 1; d <= totalDaysInMonth; d++) {
                     if (isWeekend(d, state.month, state.year)) continue; const dateKey = formatDateKey(d, state.month, state.year); if (HOLIDAYS[dateKey]) continue;
@@ -1240,15 +1354,18 @@
                     <td class="px-4 py-2 border font-semibold text-red-700">${counts['Daring']}</td>
                 </tr>`;
             });
-            $rekapBody.innerHTML = bodyHTML;
+            $rekapBody.innerHTML = bodyHTML || '<tr><td colspan="7" class="px-4 py-8 text-center text-gray-400 italic">Tidak ada data ditemukan.</td></tr>';
         }
 
         function renderReport() {
-            const stats = calculateMonthStats(state.year, state.month); 
             const monthData = getMonthData(); 
             const totalDaysInMonth = getDaysInMonth(state.month, state.year);
-            $reportPeriod.textContent = `Periode : ${MONTHS[state.month]} ${state.year}`; let bodyHTML = '';
+            const searchTerm = (document.getElementById('searchLaporan')?.value || '').toLowerCase();
+            $reportPeriod.textContent = `Periode : ${MONTHS[state.month]} ${state.year}`; 
+            let bodyHTML = '';
+            let filterDays = 0, filterBruto = 0, filterPph = 0, filterNetto = 0;
             monthData.staff.forEach((emp, idx) => {
+                if (searchTerm && !emp.nama.toLowerCase().includes(searchTerm)) return;
                 const gol = emp.gol || '-';
                 const rate = RATES[gol] || 0; const taxRate = TAX_RATES[gol] || 0; let daysCount = 0;
                 for (let d = 1; d <= totalDaysInMonth; d++) { 
@@ -1258,10 +1375,11 @@
                     daysCount++; 
                 }
                 const bruto = daysCount * rate; const pph = Math.round(bruto * taxRate); const netto = bruto - pph;
+                filterDays += daysCount; filterBruto += bruto; filterPph += pph; filterNetto += netto;
                 bodyHTML += `<tr class="hover:bg-gray-50"><td class="px-3 py-1 border">${idx + 1}</td><td class="px-3 py-1 border sticky left-0 bg-white">${emp.nama}</td><td class="px-3 py-1 border text-center font-bold">${gol}</td><td class="px-3 py-1 border text-center font-bold">${daysCount}</td><td class="px-3 py-1 border font-semibold text-green-700 text-right">${formatCurrency(bruto)}</td><td class="px-3 py-1 border text-red-600 text-right">${formatCurrency(pph)}</td><td class="px-3 py-1 border font-bold text-blue-700 text-right">${formatCurrency(netto)}</td></tr>`;
             });
-            $reportBody.innerHTML = bodyHTML;
-            document.getElementById('totalDays').textContent = stats.days; document.getElementById('totalBruto').textContent = formatCurrency(stats.bruto); document.getElementById('totalPph').textContent = formatCurrency(stats.pph); document.getElementById('totalNetto').textContent = formatCurrency(stats.netto);
+            $reportBody.innerHTML = bodyHTML || '<tr><td colspan="7" class="px-3 py-8 text-center text-gray-400 italic">Tidak ada data ditemukan.</td></tr>';
+            document.getElementById('totalDays').textContent = filterDays; document.getElementById('totalBruto').textContent = formatCurrency(filterBruto); document.getElementById('totalPph').textContent = formatCurrency(filterPph); document.getElementById('totalNetto').textContent = formatCurrency(filterNetto);
         }
 
         function autoResize(e) { const el = e.target; el.style.height = 'auto'; el.style.height = (el.scrollHeight) + 'px'; }
@@ -1358,6 +1476,13 @@
         document.addEventListener('keydown', (e) => { if (e.key === 'Escape') { hideDropdown(); closeModal(); } });
         if($tableWrapper) { $tableWrapper.addEventListener('scroll', () => { if (activeCell) updateDropdownPosition(); }); }
         document.getElementById('menuToggle').addEventListener('click', () => { document.getElementById('mobileNav').classList.toggle('hidden'); });
+        
+        // === SEARCH EVENT LISTENERS ===
+        document.getElementById('searchJadwal').addEventListener('input', render);
+        document.getElementById('searchRekap').addEventListener('input', renderRekap);
+        document.getElementById('searchLaporan').addEventListener('input', renderReport);
+        document.getElementById('searchDatabase').addEventListener('input', renderDatabase);
+
         function createParticles() { const c = document.getElementById('bg-particles'); for (let i = 0; i < 6; i++) { const p = document.createElement('div'); p.className = 'bg-particle'; p.style.cssText = `width: ${Math.random()*200+100}px; height: ${Math.random()*200+100}px; left: ${Math.random()*100}%; top: ${Math.random()*100}%;`; c.appendChild(p); } }
 
         // === INIT ===
